@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Colors
@@ -7,27 +8,27 @@ class AppTheme {
   static const Color secondaryColor = Color(0xFF2a2a2a);
   static const Color textColor = Color(0xFFFFFFFF);
   static const Color textSecondaryColor = Color(0xFFB0B0B0);
-  static const Color accentColor = Color(0xFF007AFF);
-  static const Color accentColorLight = Color(0xFF0099FF);
+  static const Color accentColor = Color(0xFF00FF00);
+  static const Color accentColorLight = Color(0xFF00CC00);
   static const Color cardColor = Color(0xFF1a1a1a);
   static const Color borderColor = Color(0xFF333333);
   static const Color successColor = Color(0xFF34C759);
   static const Color errorColor = Color(0xFFFF3B30);
   static const Color warningColor = Color(0xFFFF9500);
-  
+
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [accentColor, accentColorLight],
   );
-  
+
   static const LinearGradient cardGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [cardColor, Color(0xFF242424)],
   );
-  
+
   // Shadows
   static List<BoxShadow> get cardShadow => [
     BoxShadow(
@@ -36,7 +37,7 @@ class AppTheme {
       offset: const Offset(0, 2),
     ),
   ];
-  
+
   static List<BoxShadow> get elevatedShadow => [
     BoxShadow(
       color: Colors.black.withValues(alpha: 0.4),
@@ -95,11 +96,13 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: primaryColor,
       scaffoldBackgroundColor: backgroundColor,
-      appBarTheme: const AppBarTheme(
+      fontFamily: GoogleFonts.poppins().fontFamily,
+      textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
+      appBarTheme: AppBarTheme(
         backgroundColor: backgroundColor,
         elevation: 0,
-        iconTheme: IconThemeData(color: textColor),
-        titleTextStyle: TextStyle(
+        iconTheme: const IconThemeData(color: textColor),
+        titleTextStyle: GoogleFonts.poppins(
           color: textColor,
           fontSize: 18,
           fontWeight: FontWeight.bold,
@@ -114,9 +117,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: cardColor,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         shadowColor: Colors.black.withValues(alpha: 0.3),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -166,4 +167,3 @@ class AppTheme {
     );
   }
 }
-
