@@ -13,6 +13,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   String _name = '';
   String _bio = '';
+  String _club = '';
   bool _isLoading = true;
 
   @override
@@ -25,9 +26,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await Future.delayed(const Duration(milliseconds: 300));
     final name = await DataService.getName();
     final bio = await DataService.getBio();
+    final club = await DataService.getClub();
     setState(() {
       _name = name;
       _bio = bio;
+      _club = club;
       _isLoading = false;
     });
   }
@@ -170,7 +173,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: Image.asset(
-                                  'assets/images/Ahly.png',
+                                  DataService.getClubLogo(_club),
                                   width: 40,
                                   height: 40,
                                   fit: BoxFit.cover,
@@ -196,9 +199,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Text(
-                                    'Al Ahly',
-                                    style: TextStyle(
+                                  Text(
+                                    _club.isEmpty ? 'Al Ahly' : _club,
+                                    style: const TextStyle(
                                       color: AppTheme.textColor,
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -298,8 +301,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         // Career history section
         _buildCareerItem(
-          'assets/images/Ahly.png',
-          'Al Ahly',
+          DataService.getClubLogo(_club),
+          _club.isEmpty ? 'Al Ahly' : _club,
           'Goalkeeper',
           '2022-Now',
         ),

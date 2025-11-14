@@ -7,6 +7,16 @@ class DataService {
   static const String _pronounsKey = 'pronouns';
   static const String _urlKey = 'url';
   static const String _userDomainKey = 'userDomain';
+  static const String _clubKey = 'club';
+
+  // Club logos mapping
+  static const Map<String, String> clubLogos = {
+    'Al Ahly': 'assets/images/Ahly.png',
+    'Zamalek': 'assets/images/Zamalek.png',
+    'Pyramids': 'assets/images/Pyramids.png',
+    'Man City': 'assets/images/Mancity.png',
+    'Real Madrid': 'assets/images/Madrid.png',
+  };
 
   // Valid emails that can login
   static const List<String> validEmails = [
@@ -72,6 +82,21 @@ class DataService {
     await prefs.setString(_urlKey, newUrl);
   }
 
+  // Club
+  static Future<String> getClub() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_clubKey) ?? 'Al Ahly';
+  }
+
+  static Future<void> setClub(String newClub) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_clubKey, newClub);
+  }
+
+  static String getClubLogo(String clubName) {
+    return clubLogos[clubName] ?? 'assets/images/Ahly.png';
+  }
+
   // User Domain (coach.com or player.com)
   static Future<String?> getUserDomain() async {
     final prefs = await SharedPreferences.getInstance();
@@ -103,7 +128,3 @@ class DataService {
     return domain != null && (domain == 'coach.com' || domain == 'player.com');
   }
 }
-
-
-
-
