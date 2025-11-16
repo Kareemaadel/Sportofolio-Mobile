@@ -38,27 +38,53 @@ class _EditNameScreenState extends State<EditNameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final backgroundColor = isDark
+        ? AppTheme.backgroundColor
+        : AppTheme.backgroundColorLight;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+    final secondaryTextColor = isDark
+        ? const Color(0xFF8A8B8F)
+        : AppTheme.textSecondaryColorLight;
+    final inputBgColor = isDark
+        ? const Color(0xFF1F1F1F)
+        : const Color(0xFFF0F0F0);
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.backgroundColor,
-        leading: TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Cancel',
-            style: TextStyle(color: AppTheme.textColor, fontSize: 16),
+        backgroundColor: backgroundColor,
+        leading: Container(
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.only(left: 8),
+          child: TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: textColor, fontSize: 16),
+            ),
           ),
         ),
-        leadingWidth: 80,
+        leadingWidth: 100,
         actions: [
-          TextButton(
-            onPressed: _saveName,
-            child: const Text(
-              'Save',
-              style: TextStyle(
-                color: Color(0xFFFF3B5C),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton(
+              onPressed: _saveName,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              child: const Text(
+                'Save',
+                style: TextStyle(
+                  color: AppTheme.accentColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -70,28 +96,28 @@ class _EditNameScreenState extends State<EditNameScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Name',
               style: TextStyle(
-                color: AppTheme.textColor,
+                color: textColor,
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Your name can only be changed once every 7 days.',
-              style: TextStyle(color: Color(0xFF8A8B8F), fontSize: 14),
+              style: TextStyle(color: secondaryTextColor, fontSize: 14),
             ),
             const SizedBox(height: 24),
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF1F1F1F),
+                color: inputBgColor,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextField(
                 controller: _nameController,
-                style: const TextStyle(color: AppTheme.textColor, fontSize: 16),
+                style: TextStyle(color: textColor, fontSize: 16),
                 maxLength: _maxLength,
                 decoration: InputDecoration(
                   border: InputBorder.none,
@@ -102,10 +128,7 @@ class _EditNameScreenState extends State<EditNameScreen> {
                   counterText: '',
                   suffixIcon: _nameController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(
-                            Icons.cancel,
-                            color: Color(0xFF8A8B8F),
-                          ),
+                          icon: Icon(Icons.cancel, color: secondaryTextColor),
                           onPressed: () {
                             setState(() {
                               _nameController.clear();
@@ -124,7 +147,7 @@ class _EditNameScreenState extends State<EditNameScreen> {
               alignment: Alignment.centerRight,
               child: Text(
                 '${_nameController.text.length}/$_maxLength',
-                style: const TextStyle(color: Color(0xFF8A8B8F), fontSize: 12),
+                style: TextStyle(color: secondaryTextColor, fontSize: 12),
               ),
             ),
           ],

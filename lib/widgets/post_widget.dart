@@ -1,315 +1,415 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../theme/app_theme.dart';
 
 class PostWidget extends StatefulWidget {
   final String profileImage;
   final String userName;
+  final String? userDescription;
   final String timeAgo;
   final String content;
   final String? postImage;
+  final List<String>? postImages;
   final int likes;
   final int comments;
   final int reposts;
+  final int shares;
 
   const PostWidget({
     super.key,
-    this.profileImage = 'assets/images/profilepostpic.png',
-    this.userName = 'Real Madrid C.F.',
-    this.timeAgo = '2h',
+    this.profileImage = 'assets/images/account.png',
+    this.userName = 'Zeyad Waleed',
+    this.userDescription,
+    this.timeAgo = '7h',
     this.content =
-        '💪 Final session ahead of Rayo clash!\n🔥 ¡Último entrenamiento antes del partido contra el Rayo!\n#RMCity #RayoRealMadrid',
-    this.postImage = 'assets/images/post.png',
+        'When Josko met Thomas 😍\n\nA wholesome moment that this City fan will never, ever forget! 💙\n\nTogether, we can use our #PowerForGood to end bullying, for good 🛡️ #AntiBullyingWeek',
+    this.postImage,
+    this.postImages,
     this.likes = 0,
     this.comments = 0,
     this.reposts = 0,
+    this.shares = 0,
   });
 
   @override
   State<PostWidget> createState() => _PostWidgetState();
 }
 
-class _PostWidgetState extends State<PostWidget>
-    with SingleTickerProviderStateMixin {
+class _PostWidgetState extends State<PostWidget> {
   bool _isLiked = false;
   bool _isReposted = false;
-  late AnimationController _animationController;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, 20 * (1 - value)),
-          child: Opacity(opacity: value, child: child),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
-        decoration: BoxDecoration(
-          gradient: AppTheme.cardGradient,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.borderColor, width: 1),
-          boxShadow: AppTheme.cardShadow,
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {},
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(AppTheme.spacingM),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Post Header
-                  Row(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppTheme.accentColor.withValues(alpha: 0.3),
-                            width: 2,
-                          ),
-                        ),
-                        child: CircleAvatar(
-                          radius: 24,
-                          backgroundColor: AppTheme.cardColor,
-                          backgroundImage: AssetImage(widget.profileImage),
-                        ),
-                      ),
-                      const SizedBox(width: AppTheme.spacingS),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  widget.userName,
-                                  style: AppTheme.bodyLarge.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                const SizedBox(width: AppTheme.spacingXS),
-                                Icon(
-                                  Icons.verified,
-                                  size: 16,
-                                  color: AppTheme.accentColor,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              widget.timeAgo,
-                              style: AppTheme.bodySmall.copyWith(
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.more_vert),
-                        color: AppTheme.textSecondaryColor,
-                        iconSize: 20,
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppTheme.spacingM),
-                  // Post Content
-                  Text(
-                    widget.content,
-                    style: AppTheme.bodyMedium.copyWith(
-                      height: 1.5,
-                      fontSize: 15,
-                    ),
-                  ),
-                  if (widget.postImage != null) ...[
-                    const SizedBox(height: AppTheme.spacingM),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        widget.postImage!,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 250,
-                            decoration: BoxDecoration(
-                              color: AppTheme.secondaryColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.image_not_supported,
-                                color: AppTheme.textSecondaryColor,
-                                size: 48,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: AppTheme.spacingM),
-                  // Post Stats
-                  if (widget.likes > 0 || widget.comments > 0 || widget.reposts > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppTheme.spacingS),
-                      child: Row(
-                        children: [
-                          if (widget.likes > 0) ...[
-                            _buildStatChip(
-                              Icons.favorite,
-                              widget.likes.toString(),
-                              AppTheme.errorColor,
-                            ),
-                            const SizedBox(width: AppTheme.spacingM),
-                          ],
-                          if (widget.comments > 0) ...[
-                            _buildStatChip(
-                              Icons.comment,
-                              widget.comments.toString(),
-                              AppTheme.textSecondaryColor,
-                            ),
-                            const SizedBox(width: AppTheme.spacingM),
-                          ],
-                          if (widget.reposts > 0)
-                            _buildStatChip(
-                              Icons.repeat,
-                              widget.reposts.toString(),
-                              AppTheme.successColor,
-                            ),
-                        ],
-                      ),
-                    ),
-                  // Divider
-                  Divider(
-                    color: AppTheme.borderColor.withValues(alpha: 0.5),
-                    height: 1,
-                  ),
-                  const SizedBox(height: AppTheme.spacingS),
-                  // Post Actions
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildActionButton(
-                        icon: _isLiked ? Icons.favorite : Icons.favorite_border,
-                        label: 'Like',
-                        count: widget.likes,
-                        isActive: _isLiked,
-                        activeColor: AppTheme.errorColor,
-                        onTap: () {
-                          setState(() {
-                            _isLiked = !_isLiked;
-                          });
-                          _animationController.forward().then((_) {
-                            _animationController.reverse();
-                          });
-                        },
-                      ),
-                      _buildActionButton(
-                        icon: Icons.comment_outlined,
-                        label: 'Comment',
-                        count: widget.comments,
-                        onTap: () {},
-                      ),
-                      _buildActionButton(
-                        icon: _isReposted ? Icons.repeat : Icons.repeat_outlined,
-                        label: 'Repost',
-                        count: widget.reposts,
-                        isActive: _isReposted,
-                        activeColor: AppTheme.successColor,
-                        onTap: () {
-                          setState(() {
-                            _isReposted = !_isReposted;
-                          });
-                        },
-                      ),
-                      _buildActionButton(
-                        icon: Icons.share_outlined,
-                        label: 'Share',
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+    final secondaryTextColor =
+        isDark ? AppTheme.textSecondaryColor : AppTheme.textSecondaryColorLight;
+    final backgroundColor =
+        isDark ? AppTheme.backgroundColor : AppTheme.backgroundColorLight;
+
+    // Get images list
+    final images = widget.postImages ??
+        (widget.postImage != null ? [widget.postImage!] : <String>[]);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: Border(
+          bottom: BorderSide(
+            color: secondaryTextColor.withOpacity(0.2),
+            width: 0.5,
           ),
         ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row: Profile picture + username info
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Profile picture
+              CircleAvatar(
+                radius: 20,
+                backgroundImage: AssetImage(widget.profileImage),
+                backgroundColor: Colors.grey[800],
+              ),
+              const SizedBox(width: 12),
+              
+              // Username, verified, time, description
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.userName,
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.verified,
+                          size: 14,
+                          color: Color(0xFF2DAE00),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          widget.timeAgo,
+                          style: TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (widget.userDescription != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.userDescription!,
+                        style: TextStyle(
+                          color: secondaryTextColor,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              
+              // Menu button
+              IconButton(
+                icon: Icon(
+                  Icons.more_horiz,
+                  color: secondaryTextColor,
+                  size: 22,
+                ),
+                onPressed: () {},
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 40,
+                  minHeight: 30,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Content text - aligned with profile picture
+          _buildContentWithMentions(widget.content, textColor),
+
+          // Images (if any) - aligned with profile picture
+          if (images.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildImagesGrid(images, secondaryTextColor),
+          ],
+
+          const SizedBox(height: 12),
+
+          // Action buttons - aligned with profile picture
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              _buildSvgActionButton(
+                svgPath: _isLiked
+                    ? 'assets/icons/heart (1).svg'
+                    : 'assets/icons/heart.svg',
+                count: widget.likes + (_isLiked ? 1 : 0),
+                color: _isLiked ? Colors.red : secondaryTextColor,
+                onTap: () {
+                  setState(() {
+                    _isLiked = !_isLiked;
+                  });
+                },
+              ),
+              const SizedBox(width: 40),
+              _buildSvgActionButton(
+                svgPath: 'assets/icons/comment-dots.svg',
+                count: widget.comments,
+                color: secondaryTextColor,
+                onTap: () {},
+              ),
+              const SizedBox(width: 40),
+              _buildSvgActionButton(
+                svgPath: 'assets/icons/share-square.svg',
+                count: widget.reposts + (_isReposted ? 1 : 0),
+                color: _isReposted ? Color(0xFF2DAE00) : secondaryTextColor,
+                onTap: () {
+                  setState(() {
+                    _isReposted = !_isReposted;
+                  });
+                },
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildStatChip(IconData icon, String count, Color color) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: AppTheme.spacingXS),
-        Text(
-          count,
-          style: AppTheme.bodySmall.copyWith(color: color),
+  Widget _buildContentWithMentions(String content, Color textColor) {
+    final mentionRegex = RegExp(r'@\w+');
+    final matches = mentionRegex.allMatches(content);
+    
+    if (matches.isEmpty) {
+      // No mentions, return simple text
+      return Text(
+        content,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 14,
+          height: 1.4,
         ),
-      ],
+      );
+    }
+
+    // Build rich text with colored mentions
+    List<TextSpan> spans = [];
+    int lastIndex = 0;
+
+    for (final match in matches) {
+      // Add text before mention
+      if (match.start > lastIndex) {
+        spans.add(TextSpan(
+          text: content.substring(lastIndex, match.start),
+          style: TextStyle(
+            color: textColor,
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ));
+      }
+
+      // Add mention with light blue color
+      spans.add(TextSpan(
+        text: match.group(0),
+        style: TextStyle(
+          color: Colors.lightBlue,
+          fontSize: 14,
+          height: 1.4,
+          fontWeight: FontWeight.w500,
+        ),
+      ));
+
+      lastIndex = match.end;
+    }
+
+    // Add remaining text after last mention
+    if (lastIndex < content.length) {
+      spans.add(TextSpan(
+        text: content.substring(lastIndex),
+        style: TextStyle(
+          color: textColor,
+          fontSize: 14,
+          height: 1.4,
+        ),
+      ));
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    int? count,
-    bool isActive = false,
-    Color? activeColor,
-    required VoidCallback onTap,
-  }) {
-    final color = isActive
-        ? (activeColor ?? AppTheme.accentColor)
-        : AppTheme.textSecondaryColor;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppTheme.spacingS,
-          vertical: AppTheme.spacingXS,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 22, color: color),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: AppTheme.bodySmall.copyWith(
-                color: color,
-                fontSize: 11,
+  Widget _buildImagesGrid(List<String> images, Color borderColor) {
+    if (images.length == 1) {
+      // Single image
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Image.asset(
+          images[0],
+          width: double.infinity,
+          height: 300,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              height: 300,
+              decoration: BoxDecoration(
+                color: Colors.grey[850],
+                borderRadius: BorderRadius.circular(16),
               ),
+              child: Center(
+                child: Icon(
+                  Icons.image_not_supported,
+                  color: borderColor,
+                  size: 48,
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    } else if (images.length == 2) {
+      // Two images side by side
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
+          height: 320,
+          child: Row(
+            children: [
+              Expanded(
+                child: Image.asset(
+                  images[0],
+                  height: 320,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 320,
+                      color: Colors.grey[850],
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: borderColor,
+                        size: 32,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 2),
+              Expanded(
+                child: Image.asset(
+                  images[1],
+                  height: 320,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 320,
+                      color: Colors.grey[850],
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: borderColor,
+                        size: 32,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      // Multiple images in grid (3 or 4 images)
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
+          height: 320,
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 2,
+              mainAxisSpacing: 2,
             ),
+            itemCount: images.length > 4 ? 4 : images.length,
+            itemBuilder: (context, index) {
+              return Image.asset(
+                images[index],
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[850],
+                    child: Icon(
+                      Icons.image_not_supported,
+                      color: borderColor,
+                      size: 24,
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildSvgActionButton({
+    required String svgPath,
+    required int count,
+    required Color color,
+    required VoidCallback onTap,
+    bool showCount = true,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        child: Row(
+          children: [
+            SvgPicture.asset(
+              svgPath,
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+            ),
+            if (showCount && count > 0) ...[
+              const SizedBox(width: 6),
+              Text(
+                count.toString(),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 13,
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 }
+
