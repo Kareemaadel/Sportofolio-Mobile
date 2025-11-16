@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/post_widget.dart';
 
@@ -9,70 +11,148 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _HomeScreenState extends State<HomeScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _isNavBarVisible = true;
+  double _lastScrollOffset = 0;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    final currentScrollOffset = _scrollController.offset;
+    final scrollingDown = currentScrollOffset > _lastScrollOffset;
+    final scrollingUp = currentScrollOffset < _lastScrollOffset;
+
+    // Only update if scroll offset changed significantly (5px threshold)
+    if ((currentScrollOffset - _lastScrollOffset).abs() > 5) {
+      if (scrollingDown && _isNavBarVisible && currentScrollOffset > 50) {
+        // Hide nav bar when scrolling down (after 50px)
+        setState(() {
+          _isNavBarVisible = false;
+        });
+      } else if (scrollingUp && !_isNavBarVisible) {
+        // Show nav bar when scrolling up
+        setState(() {
+          _isNavBarVisible = true;
+        });
+      }
+      _lastScrollOffset = currentScrollOffset;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final backgroundColor = isDark
+        ? AppTheme.backgroundColor
+        : AppTheme.backgroundColorLight;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      body: Column(
+      backgroundColor: backgroundColor,
+      body: Stack(
         children: [
-          // App Bar with centered tabs
-          Container(
-            padding: const EdgeInsets.only(top: AppTheme.spacingM),
-            child: Row(
-              children: [
-                // Left spacer for centering
-                const SizedBox(width: 56),
-                // Centered tabs
-                Expanded(
-                  child: TabBar(
-                    controller: _tabController,
-                    indicatorColor: AppTheme.textColor,
-                    indicatorWeight: 3,
-                    labelColor: AppTheme.textColor,
-                    unselectedLabelColor: AppTheme.textSecondaryColor,
-                    labelStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    unselectedLabelStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    tabs: const [
-                      Tab(text: 'Following'),
-                      Tab(text: 'For You'),
-                    ],
+          // Posts Feed with top padding
+          Positioned.fill(
+            child: CustomScrollView(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // Top spacing for nav bar
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: _isNavBarVisible ? 68 : 0,
                   ),
                 ),
-                // Right side - no search icon per request
-                const SizedBox(width: 56),
+                // Posts Feed
+                _buildPostsSliverList(),
               ],
             ),
           ),
-          // Tab View
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildPostsList(),
-                _buildPostsList(), // Same content for now
-              ],
+          // Animated Top Nav Bar
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            top: _isNavBarVisible ? 0 : -68,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.only(top: 16, bottom: 12, left: 16, right: 16),
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Left side - App Logo and Title
+                  Row(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/images/logo.svg',
+                        height: 32,
+                        width: 32,
+                        placeholderBuilder: (context) => const Icon(
+                          Icons.sports_soccer,
+                          color: AppTheme.accentColor,
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Sportofolio',
+                        style: GoogleFonts.poppins(
+                          color: textColor,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  // Right side - Notification and Message icons
+                  IconButton(
+                    icon: SvgPicture.asset(
+                      'assets/icons/bell.svg',
+                      width: 24,
+                      height: 24,
+                      colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+                    ),
+                    onPressed: () {
+                      // TODO: Navigate to notifications
+                    },
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    icon: SvgPicture.asset(
+                      'assets/icons/paper-plane.svg',
+                      width: 24,
+                      height: 24,
+                      colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+                    ),
+                    onPressed: () {
+                      // TODO: Navigate to messages
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -80,83 +160,86 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildPostsList() {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        // Posts Feed
-        SliverPadding(
-          padding: const EdgeInsets.all(AppTheme.spacingM),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              final posts = _getPosts();
-              if (index < posts.length) {
-                return TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  duration: Duration(milliseconds: 300 + (index * 100)),
-                  curve: Curves.easeOut,
-                  builder: (context, value, child) {
-                    return Opacity(
-                      opacity: value,
-                      child: Transform.translate(
-                        offset: Offset(0, 20 * (1 - value)),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: PostWidget(
-                    profileImage: posts[index]['profileImage']!,
-                    userName: posts[index]['userName']!,
-                    timeAgo: posts[index]['timeAgo']!,
-                    content: posts[index]['content']!,
-                    postImage: posts[index]['postImage'],
-                    likes: posts[index]['likes'] as int,
-                    comments: posts[index]['comments'] as int,
-                    reposts: posts[index]['reposts'] as int,
+  Widget _buildPostsSliverList() {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final posts = _getPosts();
+          if (index < posts.length) {
+            return TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: Duration(milliseconds: 300 + (index * 100)),
+              curve: Curves.easeOut,
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Transform.translate(
+                    offset: Offset(0, 20 * (1 - value)),
+                    child: child,
                   ),
                 );
-              }
-              return null;
-            }, childCount: _getPosts().length),
-          ),
-        ),
-      ],
+              },
+              child: PostWidget(
+                profileImage: posts[index]['profileImage']!,
+                userName: posts[index]['userName']!,
+                userDescription: posts[index]['userDescription'] as String?,
+                timeAgo: posts[index]['timeAgo']!,
+                content: posts[index]['content']!,
+                postImage: posts[index]['postImage'],
+                postImages: posts[index]['postImages'] as List<String>?,
+                likes: posts[index]['likes'] as int,
+                comments: posts[index]['comments'] as int,
+                reposts: (posts[index]['reposts'] as int?) ?? 0,
+                shares: (posts[index]['shares'] as int?) ?? 0,
+              ),
+            );
+          }
+          return null;
+        },
+        childCount: _getPosts().length,
+      ),
     );
   }
 
   List<Map<String, dynamic>> _getPosts() {
     return [
       {
-        'profileImage': 'assets/images/profilepostpic.png',
-        'userName': 'Real Madrid C.F.',
-        'timeAgo': '2h',
+        'profileImage': 'assets/images/account.png',
+        'userName': 'Zeyad Waleed',
+        'userDescription': 'Basketball Player @Ahly',
+        'timeAgo': '7h',
         'content':
-            '💪 Final session ahead of Rayo clash!\n🔥 ¡Último entrenamiento antes del partido contra el Rayo!\n#RMCity #RayoRealMadrid',
-        'postImage': 'assets/images/post.png',
-        'likes': 1240,
-        'comments': 89,
-        'reposts': 45,
+            'When Josko met Thomas 😍\n\nA wholesome moment that this City fan will never, ever forget! 💙\n\nTogether, we can use our #PowerForGood to end bullying, for good 🛡️ #AntiBullyingWeek',
+        'postImages': ['assets/images/post.png', 'assets/images/post.png'],
+        'likes': 727,
+        'comments': 2,
+        'reposts': 8,
+        'shares': 1,
       },
       {
-        'profileImage': 'assets/images/profilepostpic.png',
-        'userName': 'Barcelona FC',
-        'timeAgo': '5h',
-        'content': 'Match day! Ready for the game! 🏆⚽\n#ViscaElBarca',
-        'postImage': 'assets/images/post.png',
-        'likes': 892,
-        'comments': 67,
-        'reposts': 23,
-      },
-      {
-        'profileImage': 'assets/images/profilepostpic.png',
-        'userName': 'Manchester City',
+        'profileImage': 'assets/images/Madrid.png',
+        'userName': 'Real Madrid',
+        'userDescription': 'Official Account',
         'timeAgo': '1d',
         'content':
-            'Training session completed! 💪\nGreat work from the team today!',
+            '🇪🇸 7-0 🇦🇷\n💪 @gonzalogarcia7_\n🏅 2027 #U21EURO Qualifiers',
         'postImage': 'assets/images/post.png',
-        'likes': 567,
-        'comments': 34,
-        'reposts': 12,
+        'likes': 1240,
+        'comments': 597,
+        'reposts': 125,
+        'shares': 45,
+      },
+      {
+        'profileImage': 'assets/images/Mancity.png',
+        'userName': 'Manchester City',
+        'userDescription': 'Football Club',
+        'timeAgo': '2d',
+        'content': '⚪ Match day ready! 💪\n#ManCity',
+        'postImage': 'assets/images/post.png',
+        'likes': 892,
+        'comments': 423,
+        'reposts': 87,
+        'shares': 34,
       },
     ];
   }

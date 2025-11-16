@@ -37,10 +37,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final backgroundColor = isDark
+        ? AppTheme.backgroundColor
+        : AppTheme.backgroundColorLight;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+    final secondaryTextColor = isDark
+        ? const Color(0xFF8A8B8F)
+        : AppTheme.textSecondaryColorLight;
+    final cardColor = isDark ? AppTheme.cardColor : AppTheme.cardColorLight;
+    final borderColor = isDark ? AppTheme.borderColor : AppTheme.borderColorLight;
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: backgroundColor,
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(color: AppTheme.accentColor),
             )
           : CustomScrollView(
@@ -49,28 +61,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SliverAppBar(
                   floating: true,
                   pinned: false,
-                  backgroundColor: AppTheme.backgroundColor,
+                  backgroundColor: backgroundColor,
                   automaticallyImplyLeading: false,
                   title: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        icon: const Icon(
-                          Icons.grid_view,
-                          color: AppTheme.textColor,
-                        ),
+                        icon: Icon(Icons.grid_view, color: textColor),
                         onPressed: () {},
                       ),
                       Text(
                         'zeyad_waleeed',
-                        style: const TextStyle(
-                          color: AppTheme.textColor,
+                        style: TextStyle(
+                          color: textColor,
                           fontSize: 18,
                           fontWeight: FontWeight.normal,
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.menu, color: AppTheme.textColor),
+                        icon: Icon(Icons.settings, color: textColor),
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -102,15 +111,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         child: Container(
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                AppTheme.backgroundColor.withOpacity(0.7),
-                                AppTheme.backgroundColor,
-                              ],
-                            ),
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  backgroundColor.withOpacity(0.7),
+                                  backgroundColor,
+                                ],
+                              ),
                           ),
                         ),
                       ),
@@ -124,14 +133,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: AppTheme.backgroundColor,
+                                  color: backgroundColor,
                                   width: 4,
                                 ),
                               ),
-                              child: const CircleAvatar(
+                              child: CircleAvatar(
                                 radius: 70,
-                                backgroundColor: AppTheme.cardColor,
-                                backgroundImage: AssetImage(
+                                backgroundColor: cardColor,
+                                backgroundImage: const AssetImage(
                                   'assets/images/profile pic.png',
                                 ),
                               ),
@@ -142,16 +151,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.backgroundColor,
+                                  color: backgroundColor,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: AppTheme.textColor,
+                                    color: textColor,
                                     width: 2,
                                   ),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.camera_alt,
-                                  color: AppTheme.textColor,
+                                  color: textColor,
                                   size: 20,
                                 ),
                               ),
@@ -165,7 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppTheme.backgroundColor.withOpacity(0.9),
+                            color: backgroundColor.withOpacity(0.9),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -201,8 +210,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 children: [
                                   Text(
                                     _club.isEmpty ? 'Al Ahly' : _club,
-                                    style: const TextStyle(
-                                      color: AppTheme.textColor,
+                                    style: TextStyle(
+                                      color: textColor,
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -210,7 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   Text(
                                     'Football  Goalkeeper',
                                     style: TextStyle(
-                                      color: AppTheme.textColor.withOpacity(
+                                      color: textColor.withOpacity(
                                         0.7,
                                       ),
                                       fontSize: 12,
@@ -234,8 +243,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 60),
                         Text(
                           _name.isNotEmpty ? _name : 'Zeyad Waleed',
-                          style: const TextStyle(
-                            color: AppTheme.textColor,
+                          style: TextStyle(
+                            color: textColor,
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                           ),
@@ -245,8 +254,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _bio.isNotEmpty
                               ? _bio
                               : 'Talented goalkeeper currently playing for Al Ahly, one of Egypt\'s most prestigious football clubs. Born and raised in Cairo',
-                          style: const TextStyle(
-                            color: Color(0xFF8A8B8F),
+                          style: TextStyle(
+                            color: secondaryTextColor,
                             fontSize: 15,
                             height: 1.5,
                           ),
@@ -259,13 +268,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Container(
                               width: 1,
                               height: 40,
-                              color: AppTheme.borderColor,
+                              color: borderColor,
                             ),
                             _buildStatColumn('1,457', 'Followers'),
                             Container(
                               width: 1,
                               height: 40,
-                              color: AppTheme.borderColor,
+                              color: borderColor,
                             ),
                             _buildStatColumn('64.7K', 'Likes'),
                           ],
@@ -296,6 +305,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildInfoSection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+    final secondaryTextColor = isDark
+        ? const Color(0xFF8A8B8F)
+        : AppTheme.textSecondaryColorLight;
+    final cardColor = isDark ? AppTheme.cardColor : AppTheme.cardColorLight;
+    final borderColor = isDark ? AppTheme.borderColor : AppTheme.borderColorLight;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -322,7 +340,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 32),
         // Player stats section
-        _buildPlayerStat('Heart', '70', 'BPM', Icons.favorite, Colors.red),
+        _buildPlayerStat('Heart', '70', 'BPM', Icons.favorite, Colors.red, textColor, secondaryTextColor, cardColor, borderColor),
         const SizedBox(height: 16),
         _buildPlayerStat(
           'Age',
@@ -330,6 +348,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'years',
           Icons.person,
           AppTheme.accentColor,
+          textColor,
+          secondaryTextColor,
+          cardColor,
+          borderColor,
         ),
         const SizedBox(height: 16),
         _buildPlayerStat(
@@ -338,6 +360,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           '',
           Icons.sports_soccer,
           AppTheme.accentColor,
+          textColor,
+          secondaryTextColor,
+          cardColor,
+          borderColor,
         ),
         const SizedBox(height: 16),
         _buildPlayerStat(
@@ -346,6 +372,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'cm',
           Icons.height,
           AppTheme.accentColor,
+          textColor,
+          secondaryTextColor,
+          cardColor,
+          borderColor,
         ),
         const SizedBox(height: 16),
         _buildPlayerStat(
@@ -354,6 +384,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'kcal',
           Icons.local_fire_department,
           AppTheme.accentColor,
+          textColor,
+          secondaryTextColor,
+          cardColor,
+          borderColor,
         ),
         const SizedBox(height: 16),
         _buildPlayerStat(
@@ -362,6 +396,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'gm',
           Icons.monitor_weight,
           AppTheme.accentColor,
+          textColor,
+          secondaryTextColor,
+          cardColor,
+          borderColor,
         ),
       ],
     );
@@ -373,6 +411,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String position,
     String years,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+    final secondaryTextColor = isDark
+        ? const Color(0xFF8A8B8F)
+        : AppTheme.textSecondaryColorLight;
+    
     return Row(
       children: [
         ClipRRect(
@@ -402,8 +447,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text(
                 clubName,
-                style: const TextStyle(
-                  color: AppTheme.textColor,
+                style: TextStyle(
+                  color: textColor,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -411,14 +456,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 4),
               Text(
                 position,
-                style: const TextStyle(color: Color(0xFF8A8B8F), fontSize: 14),
+                style: TextStyle(color: secondaryTextColor, fontSize: 14),
               ),
             ],
           ),
         ),
         Text(
           years,
-          style: const TextStyle(color: Color(0xFF8A8B8F), fontSize: 14),
+          style: TextStyle(color: secondaryTextColor, fontSize: 14),
         ),
       ],
     );
@@ -430,13 +475,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String unit,
     IconData icon,
     Color iconColor,
+    Color textColor,
+    Color secondaryTextColor,
+    Color cardColor,
+    Color borderColor,
   ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardColor,
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderColor, width: 1),
+        border: Border.all(color: borderColor, width: 1),
       ),
       child: Row(
         children: [
@@ -455,8 +504,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: AppTheme.textColor,
+                  style: TextStyle(
+                    color: textColor,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -464,8 +513,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 4),
                 Text(
                   unit.isNotEmpty ? '$value $unit' : value,
-                  style: const TextStyle(
-                    color: Color(0xFF8A8B8F),
+                  style: TextStyle(
+                    color: secondaryTextColor,
                     fontSize: 14,
                   ),
                 ),
@@ -476,7 +525,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Text(
             'add here..',
             style: TextStyle(
-              color: AppTheme.textColor.withOpacity(0.5),
+              color: textColor.withOpacity(0.5),
               fontSize: 12,
               fontStyle: FontStyle.italic,
             ),
@@ -487,12 +536,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildStatColumn(String value, String label) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+    final secondaryTextColor = isDark
+        ? const Color(0xFF8A8B8F)
+        : AppTheme.textSecondaryColorLight;
+    
     return Column(
       children: [
         Text(
           value,
-          style: const TextStyle(
-            color: AppTheme.textColor,
+          style: TextStyle(
+            color: textColor,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
@@ -500,18 +556,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(color: Color(0xFF8A8B8F), fontSize: 14),
+          style: TextStyle(color: secondaryTextColor, fontSize: 14),
         ),
       ],
     );
   }
 
   Widget _buildActionButton(IconData icon, VoidCallback onTap, {Color? color}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+    
     return SizedBox(
       width: 70,
       height: 48,
       child: IconButton(
-        icon: Icon(icon, color: color ?? AppTheme.textColor),
+        icon: Icon(icon, color: color ?? textColor),
         iconSize: 24,
         onPressed: onTap,
       ),

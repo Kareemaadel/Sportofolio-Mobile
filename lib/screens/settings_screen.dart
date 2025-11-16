@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/data_service.dart';
+import '../services/theme_service.dart';
 import 'edit_name_screen.dart';
 import 'edit_username_screen.dart';
 import 'edit_bio_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final ThemeService? themeService;
+
+  const SettingsScreen({super.key, this.themeService});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -26,7 +29,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Settings state
   String _pronouns = 'he/him';
   String _selectedClub = 'Al Ahly';
-  bool _darkMode = false;
   bool _emailNotifications = true;
   bool _smsNotifications = false;
 
@@ -109,18 +111,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final backgroundColor = isDark
+        ? AppTheme.backgroundColor
+        : AppTheme.backgroundColorLight;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+    final borderColor = isDark
+        ? AppTheme.borderColor
+        : AppTheme.borderColorLight;
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.backgroundColor,
+        backgroundColor: backgroundColor,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.textColor),
+          icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Edit profile',
           style: TextStyle(
-            color: AppTheme.textColor,
+            color: textColor,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -141,7 +153,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.borderColor, width: 2),
+                    border: Border.all(color: borderColor, width: 2),
                   ),
                   child: const CircleAvatar(
                     radius: 58,
@@ -573,6 +585,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildAppearanceSection() {
+    final isDarkMode = widget.themeService?.isDarkMode ?? true;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -605,11 +619,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(color: AppTheme.textColor, fontSize: 16),
                 ),
                 Switch(
-                  value: _darkMode,
-                  onChanged: (value) {
-                    setState(() {
-                      _darkMode = value;
-                    });
+                  value: isDarkMode,
+                  onChanged: (value) async {
+                    await widget.themeService?.toggleTheme();
+                    setState(() {});
                   },
                   activeColor: AppTheme.accentColor,
                 ),
