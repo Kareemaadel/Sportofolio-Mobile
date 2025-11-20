@@ -62,142 +62,150 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: Stack(
-        children: [
-          // Posts Feed with top padding
-          Positioned.fill(
-            child: CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // Top spacing for nav bar
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: _isNavBarVisible ? 68 : 0,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Posts Feed with top padding
+            Positioned.fill(
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Top spacing for nav bar
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: _isNavBarVisible ? 68 : 0),
                   ),
+                  // Posts Feed
+                  _buildPostsSliverList(),
+                ],
+              ),
+            ),
+            // Animated Top Nav Bar
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              top: _isNavBarVisible ? 0 : -68,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.only(
+                  top: 16,
+                  bottom: 12,
+                  left: 16,
+                  right: 16,
                 ),
-                // Posts Feed
-                _buildPostsSliverList(),
-              ],
-            ),
-          ),
-          // Animated Top Nav Bar
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            top: _isNavBarVisible ? 0 : -68,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.only(top: 16, bottom: 12, left: 16, right: 16),
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  // Left side - App Logo and Title
-                  Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/images/logo.svg',
-                        height: 32,
-                        width: 32,
-                        placeholderBuilder: (context) => const Icon(
-                          Icons.sports_soccer,
-                          color: AppTheme.accentColor,
-                          size: 32,
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Left side - App Logo and Title
+                    Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/images/logo.svg',
+                          height: 32,
+                          width: 32,
+                          placeholderBuilder: (context) => const Icon(
+                            Icons.sports_soccer,
+                            color: AppTheme.accentColor,
+                            size: 32,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Sportofolio',
+                          style: GoogleFonts.poppins(
+                            color: textColor,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    // Right side - Notification and Message icons
+                    IconButton(
+                      icon: SvgPicture.asset(
+                        'assets/icons/bell.svg',
+                        width: 22,
+                        height: 22,
+                        colorFilter: ColorFilter.mode(
+                          textColor,
+                          BlendMode.srcIn,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Sportofolio',
-                        style: GoogleFonts.poppins(
-                          color: textColor,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
+                      onPressed: () {
+                        // TODO: Navigate to notifications
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: SvgPicture.asset(
+                        'assets/icons/paper-plane.svg',
+                        width: 22,
+                        height: 22,
+                        colorFilter: ColorFilter.mode(
+                          textColor,
+                          BlendMode.srcIn,
                         ),
                       ),
-                    ],
-                  ),
-                  const Spacer(),
-                  // Right side - Notification and Message icons
-                  IconButton(
-                    icon: SvgPicture.asset(
-                      'assets/icons/bell.svg',
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+                      onPressed: () {
+                        // TODO: Navigate to messages
+                      },
                     ),
-                    onPressed: () {
-                      // TODO: Navigate to notifications
-                    },
-                  ),
-                  const SizedBox(width: 10),
-                  IconButton(
-                    icon: SvgPicture.asset(
-                      'assets/icons/paper-plane.svg',
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
-                    ),
-                    onPressed: () {
-                      // TODO: Navigate to messages
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildPostsSliverList() {
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final posts = _getPosts();
-          if (index < posts.length) {
-            return TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: Duration(milliseconds: 300 + (index * 100)),
-              curve: Curves.easeOut,
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, 20 * (1 - value)),
-                    child: child,
-                  ),
-                );
-              },
-              child: PostWidget(
-                profileImage: posts[index]['profileImage']!,
-                userName: posts[index]['userName']!,
-                userDescription: posts[index]['userDescription'] as String?,
-                timeAgo: posts[index]['timeAgo']!,
-                content: posts[index]['content']!,
-                postImage: posts[index]['postImage'],
-                postImages: posts[index]['postImages'] as List<String>?,
-                likes: posts[index]['likes'] as int,
-                comments: posts[index]['comments'] as int,
-                reposts: (posts[index]['reposts'] as int?) ?? 0,
-                shares: (posts[index]['shares'] as int?) ?? 0,
-              ),
-            );
-          }
-          return null;
-        },
-        childCount: _getPosts().length,
-      ),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final posts = _getPosts();
+        if (index < posts.length) {
+          return TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: Duration(milliseconds: 300 + (index * 100)),
+            curve: Curves.easeOut,
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, 20 * (1 - value)),
+                  child: child,
+                ),
+              );
+            },
+            child: PostWidget(
+              profileImage: posts[index]['profileImage']!,
+              userName: posts[index]['userName']!,
+              userDescription: posts[index]['userDescription'] as String?,
+              timeAgo: posts[index]['timeAgo']!,
+              content: posts[index]['content']!,
+              postImage: posts[index]['postImage'],
+              postImages: posts[index]['postImages'] as List<String>?,
+              likes: posts[index]['likes'] as int,
+              comments: posts[index]['comments'] as int,
+              reposts: (posts[index]['reposts'] as int?) ?? 0,
+              shares: (posts[index]['shares'] as int?) ?? 0,
+            ),
+          );
+        }
+        return null;
+      }, childCount: _getPosts().length),
     );
   }
 

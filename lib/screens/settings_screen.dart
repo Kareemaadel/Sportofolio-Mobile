@@ -5,6 +5,7 @@ import '../services/theme_service.dart';
 import 'edit_name_screen.dart';
 import 'edit_username_screen.dart';
 import 'edit_bio_screen.dart';
+import 'edit_role_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ThemeService? themeService;
@@ -29,8 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Settings state
   String _pronouns = 'he/him';
   String _selectedClub = 'Al Ahly';
-  bool _emailNotifications = true;
-  bool _smsNotifications = false;
+  String _role = 'Goalkeeper';
 
   @override
   void initState() {
@@ -40,6 +40,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _bioController = TextEditingController();
     _urlController = TextEditingController();
     _loadSettings();
+
+    // Listen to theme changes
+    widget.themeService?.addListener(_onThemeChanged);
+  }
+
+  void _onThemeChanged() {
+    setState(() {});
   }
 
   Future<void> _loadSettings() async {
@@ -49,6 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final pronouns = await DataService.getPronouns();
     final url = await DataService.getUrl();
     final club = await DataService.getClub();
+    final role = await DataService.getRole();
 
     setState(() {
       _nameController.text = name;
@@ -57,6 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _pronouns = pronouns;
       _urlController.text = url;
       _selectedClub = club;
+      _role = role;
     });
   }
 
@@ -102,6 +111,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void dispose() {
+    widget.themeService?.removeListener(_onThemeChanged);
     _nameController.dispose();
     _emailController.dispose();
     _bioController.dispose();
@@ -134,7 +144,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(
             color: textColor,
             fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.normal,
           ),
         ),
         centerTitle: true,
@@ -168,26 +178,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: const BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.accentColor,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.camera_alt,
-                      color: Colors.black,
-                      size: 24,
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 18,
                     ),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Change photo',
-              style: TextStyle(
-                color: AppTheme.accentColor,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
             ),
             const SizedBox(height: 30),
             // Form fields
@@ -219,7 +220,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     isFirst: true,
                   ),
                   _buildProfileItem(
-                    label: 'Username',
+                    label: 'Email',
                     value: _emailController.text.isEmpty
                         ? 'zeyadwaleed_7'
                         : _emailController.text,
@@ -281,16 +282,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   _buildClubDropdown(),
+                  _buildProfileItem(
+                    label: 'Role',
+                    value: _role,
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              EditRoleScreen(currentRole: _role),
+                        ),
+                      );
+                      if (result == true) {
+                        _loadSettings();
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
             // Additional sections from original settings
             const SizedBox(height: 30),
             _buildAppearanceSection(),
-            const SizedBox(height: 16),
-            _buildNotificationSection(),
-            const SizedBox(height: 16),
-            _buildAccountSection(),
             const SizedBox(height: 30),
           ],
         ),
@@ -322,7 +335,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Text(
               label,
-              style: const TextStyle(color: AppTheme.textColor, fontSize: 16),
+              style: const TextStyle(color: AppTheme.textColor, fontSize: 14),
             ),
             Row(
               children: [
@@ -330,7 +343,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   value,
                   style: TextStyle(
                     color: valueColor ?? AppTheme.textColor,
-                    fontSize: 16,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -368,7 +381,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   label,
                   style: const TextStyle(
                     color: AppTheme.textColor,
-                    fontSize: 16,
+                    fontSize: 14,
                   ),
                 ),
                 const Icon(
@@ -381,35 +394,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 8),
             Text(
               value,
-              style: const TextStyle(color: Color(0xFF8A8B8F), fontSize: 14),
+              style: const TextStyle(color: AppTheme.textColor, fontSize: 12),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildCopyableItem({required String value}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: const BoxDecoration(
-        color: AppTheme.backgroundColor,
-        border: Border(bottom: BorderSide(color: Color(0xFF1F1F1F), width: 1)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(color: AppTheme.textColor, fontSize: 16),
-            ),
-          ),
-          const Icon(Icons.content_copy, color: Color(0xFF8A8B8F), size: 20),
-        ],
       ),
     );
   }
@@ -428,7 +418,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           const Text(
             'Club',
-            style: TextStyle(color: AppTheme.textColor, fontSize: 16),
+            style: TextStyle(color: AppTheme.textColor, fontSize: 14),
           ),
           Expanded(
             child: DropdownButtonHideUnderline(
@@ -451,7 +441,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           club,
                           style: const TextStyle(
                             color: AppTheme.textColor,
-                            fontSize: 16,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -518,7 +508,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           entry.key,
                           style: const TextStyle(
                             color: AppTheme.textColor,
-                            fontSize: 16,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -538,49 +528,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAccountSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          alignment: Alignment.centerLeft,
-          child: const Text(
-            'Account',
-            style: TextStyle(
-              color: Color(0xFF8A8B8F),
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF101010),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: [
-              _buildProfileItem(
-                label: 'Change Password',
-                value: '',
-                onTap: () {},
-                isFirst: true,
-              ),
-              _buildProfileItem(
-                label: 'Delete Account',
-                value: '',
-                onTap: () {},
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -620,58 +567,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 Switch(
                   value: isDarkMode,
-                  onChanged: (value) async {
-                    await widget.themeService?.toggleTheme();
-                    setState(() {});
-                  },
-                  activeColor: AppTheme.accentColor,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNotificationSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          alignment: Alignment.centerLeft,
-          child: const Text(
-            'Notifications',
-            style: TextStyle(
-              color: Color(0xFF8A8B8F),
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF101010),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Email Notifications',
-                  style: TextStyle(color: AppTheme.textColor, fontSize: 16),
-                ),
-                Switch(
-                  value: _emailNotifications,
                   onChanged: (value) {
-                    setState(() {
-                      _emailNotifications = value;
-                    });
+                    if (widget.themeService != null) {
+                      widget.themeService!.toggleTheme();
+                    }
                   },
                   activeColor: AppTheme.accentColor,
                 ),

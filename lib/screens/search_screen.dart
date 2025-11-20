@@ -127,11 +127,11 @@ class _SearchScreenState extends State<SearchScreen>
 
     // Get unique users that match the search
     final userMap = <String, Map<String, dynamic>>{};
-    
+
     for (var post in allPosts) {
       final userName = post['userName'] as String;
       final userNameLower = userName.toLowerCase();
-      
+
       if (userNameLower.contains(query) && !userMap.containsKey(userName)) {
         userMap[userName] = {
           'profileImage': post['profileImage'],
@@ -174,10 +174,7 @@ class _SearchScreenState extends State<SearchScreen>
                 ),
                 child: TextField(
                   controller: _searchController,
-                  style: GoogleFonts.poppins(
-                    color: textColor,
-                    fontSize: 14,
-                  ),
+                  style: GoogleFonts.poppins(color: textColor, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Search Users, Posts, Videos',
                     hintStyle: GoogleFonts.poppins(
@@ -205,6 +202,9 @@ class _SearchScreenState extends State<SearchScreen>
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 14,

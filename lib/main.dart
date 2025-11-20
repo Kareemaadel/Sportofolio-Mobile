@@ -80,7 +80,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
       const SearchScreen(),
       const Placeholder(), // Create/Add screen
       const Placeholder(), // Apply screen
-      const ProfileScreen(),
+      ProfileScreen(themeService: widget.themeService),
     ];
     _controller = AnimationController(
       vsync: this,
@@ -134,93 +134,129 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
             ),
           ],
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: _onTabTapped,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppTheme.accentColor,
-          unselectedItemColor: unselectedColor,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          items: [
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/home.svg',
-                width: 22,
-                height: 22,
-                colorFilter: ColorFilter.mode(unselectedColor, BlendMode.srcIn),
+        child: Theme(
+          data: ThemeData(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: _onTabTapped,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            type: BottomNavigationBarType.fixed,
+            selectedItemColor: AppTheme.accentColor,
+            unselectedItemColor: unselectedColor,
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+            items: [
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/icons/home.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    unselectedColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                activeIcon: SvgPicture.asset(
+                  'assets/icons/home (1).svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    AppTheme.accentColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: '',
               ),
-              activeIcon: SvgPicture.asset(
-                'assets/icons/home (1).svg',
-                width: 22,
-                height: 22,
-                colorFilter: ColorFilter.mode(AppTheme.accentColor, BlendMode.srcIn),
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/icons/search.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    unselectedColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                activeIcon: SvgPicture.asset(
+                  'assets/icons/search.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    AppTheme.accentColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: '',
               ),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/search.svg',
-                width: 22,
-                height: 22,
-                colorFilter: ColorFilter.mode(unselectedColor, BlendMode.srcIn),
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/icons/add.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    unselectedColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                activeIcon: SvgPicture.asset(
+                  'assets/icons/add.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    AppTheme.accentColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: '',
               ),
-              activeIcon: SvgPicture.asset(
-                'assets/icons/search.svg',
-                width: 22,
-                height: 22,
-                colorFilter: ColorFilter.mode(AppTheme.accentColor, BlendMode.srcIn),
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/icons/apply.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    unselectedColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                activeIcon: SvgPicture.asset(
+                  'assets/icons/apply.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    AppTheme.accentColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: '',
               ),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/add.svg',
-                width: 22,
-                height: 22,
-                colorFilter: ColorFilter.mode(unselectedColor, BlendMode.srcIn),
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/icons/user.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    unselectedColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                activeIcon: SvgPicture.asset(
+                  'assets/icons/user.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    AppTheme.accentColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                label: '',
               ),
-              activeIcon: SvgPicture.asset(
-                'assets/icons/add.svg',
-                width: 22,
-                height: 22,
-                colorFilter: ColorFilter.mode(AppTheme.accentColor, BlendMode.srcIn),
-              ),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/apply.svg',
-                width: 22,
-                height: 22,
-                colorFilter: ColorFilter.mode(unselectedColor, BlendMode.srcIn),
-              ),
-              activeIcon: SvgPicture.asset(
-                'assets/icons/apply.svg',
-                width: 22,
-                height: 22,
-                colorFilter: ColorFilter.mode(AppTheme.accentColor, BlendMode.srcIn),
-              ),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/user.svg',
-                width: 22,
-                height: 22,
-                colorFilter: ColorFilter.mode(unselectedColor, BlendMode.srcIn),
-              ),
-              activeIcon: SvgPicture.asset(
-                'assets/icons/user.svg',
-                width: 22,
-                height: 22,
-                colorFilter: ColorFilter.mode(AppTheme.accentColor, BlendMode.srcIn),
-              ),
-              label: '',
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
