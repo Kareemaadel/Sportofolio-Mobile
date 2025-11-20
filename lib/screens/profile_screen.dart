@@ -1,10 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/data_service.dart';
+import '../services/theme_service.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final ThemeService? themeService;
+
+  const ProfileScreen({super.key, this.themeService});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -15,6 +18,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _bio = '';
   String _club = '';
   bool _isLoading = true;
+  int _selectedTab = 1; // 0: Videos, 1: Info, 2: Likes, 3: Trophy
 
   @override
   void initState() {
@@ -47,7 +51,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ? const Color(0xFF8A8B8F)
         : AppTheme.textSecondaryColorLight;
     final cardColor = isDark ? AppTheme.cardColor : AppTheme.cardColorLight;
-    final borderColor = isDark ? AppTheme.borderColor : AppTheme.borderColorLight;
+    final borderColor = isDark
+        ? AppTheme.borderColor
+        : AppTheme.borderColorLight;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -58,40 +64,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                SliverAppBar(
-                  floating: true,
-                  pinned: false,
-                  backgroundColor: backgroundColor,
-                  automaticallyImplyLeading: false,
-                  title: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.grid_view, color: textColor),
-                        onPressed: () {},
-                      ),
-                      Text(
-                        'zeyad_waleeed',
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 18,
-                          fontWeight: FontWeight.normal,
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.settings, color: textColor),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SettingsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
                 SliverToBoxAdapter(
                   child: Stack(
                     clipBehavior: Clip.none,
@@ -111,76 +83,119 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         child: Container(
                           decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  backgroundColor.withOpacity(0.7),
-                                  backgroundColor,
-                                ],
-                              ),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                backgroundColor.withOpacity(0.7),
+                                backgroundColor,
+                              ],
+                            ),
                           ),
                         ),
                       ),
+                      // Floating Navigation Bar
                       Positioned(
-                        left: 20,
-                        bottom: -60,
-                        child: Stack(
-                          clipBehavior: Clip.none,
+                        top: 40,
+                        left: 16,
+                        right: 16,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Container(
                               decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5),
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: backgroundColor,
-                                  width: 4,
-                                ),
                               ),
-                              child: CircleAvatar(
-                                radius: 70,
-                                backgroundColor: cardColor,
-                                backgroundImage: const AssetImage(
-                                  'assets/images/profile pic.png',
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.arrow_back,
+                                  color: Colors.white,
                                 ),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
                               ),
                             ),
-                            Positioned(
-                              right: 5,
-                              bottom: 5,
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: backgroundColor,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: textColor,
-                                    width: 2,
+                            Row(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.5),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.qr_code,
+                                      color: Colors.white,
+                                    ),
+                                    onPressed: () {
+                                      // TODO: QR code action
+                                    },
                                   ),
                                 ),
-                                child: Icon(
-                                  Icons.camera_alt,
-                                  color: textColor,
-                                  size: 20,
+                                const SizedBox(width: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.5),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.settings,
+                                      color: Colors.white,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => SettingsScreen(
+                                            themeService: widget.themeService,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ],
                         ),
                       ),
                       Positioned(
-                        right: 20,
-                        bottom: 20,
+                        left: 20,
+                        bottom: -75,
                         child: Container(
-                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: backgroundColor.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: backgroundColor,
+                              width: 4,
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 70,
+                            backgroundColor: cardColor,
+                            backgroundImage: const AssetImage(
+                              'assets/images/profile pic.png',
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 20,
+                        bottom: -75,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(6),
                                 child: Image.asset(
                                   DataService.getClubLogo(_club),
                                   width: 40,
@@ -192,7 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       height: 40,
                                       decoration: BoxDecoration(
                                         color: Colors.red,
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: const Icon(
                                         Icons.shield,
@@ -203,7 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   },
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 8),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
@@ -212,17 +227,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     _club.isEmpty ? 'Al Ahly' : _club,
                                     style: TextStyle(
                                       color: textColor,
-                                      fontSize: 16,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   Text(
-                                    'Football  Goalkeeper',
+                                    'Goalkeeper',
                                     style: TextStyle(
-                                      color: textColor.withOpacity(
-                                        0.7,
-                                      ),
-                                      fontSize: 12,
+                                      color: secondaryTextColor,
+                                      fontSize: 11,
                                     ),
                                   ),
                                 ],
@@ -240,23 +253,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 60),
+                        const SizedBox(height: 70),
                         Text(
                           _name.isNotEmpty ? _name : 'Zeyad Waleed',
                           style: TextStyle(
                             color: textColor,
-                            fontSize: 32,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
                         Text(
                           _bio.isNotEmpty
                               ? _bio
                               : 'Talented goalkeeper currently playing for Al Ahly, one of Egypt\'s most prestigious football clubs. Born and raised in Cairo',
                           style: TextStyle(
                             color: secondaryTextColor,
-                            fontSize: 15,
+                            fontSize: 12,
                             height: 1.5,
                           ),
                         ),
@@ -265,42 +278,120 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             _buildStatColumn('351', 'Following'),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: borderColor,
-                            ),
+                            Container(width: 1, height: 40, color: borderColor),
                             _buildStatColumn('1,457', 'Followers'),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: borderColor,
-                            ),
+                            Container(width: 1, height: 40, color: borderColor),
                             _buildStatColumn('64.7K', 'Likes'),
                           ],
                         ),
-                        const SizedBox(height: 32),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildActionButton(Icons.play_arrow, () {}),
-                            _buildActionButton(Icons.info_outline, () {}),
-                            _buildActionButton(Icons.favorite_border, () {}),
-                            _buildActionButton(
-                              Icons.emoji_events,
-                              () {},
-                              color: AppTheme.accentColor,
-                            ),
-                          ],
+                        const SizedBox(height: 24),
+                        Container(height: 1, color: borderColor),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildActionButton(Icons.play_arrow, () {
+                                setState(() {
+                                  _selectedTab = 0;
+                                });
+                              }, isSelected: _selectedTab == 0),
+                              _buildActionButton(Icons.info_outline, () {
+                                setState(() {
+                                  _selectedTab = 1;
+                                });
+                              }, isSelected: _selectedTab == 1),
+                              _buildActionButton(
+                                Icons.favorite_border,
+                                () {
+                                  setState(() {
+                                    _selectedTab = 2;
+                                  });
+                                },
+                                isSelected: _selectedTab == 2,
+                              ),
+                              _buildActionButton(Icons.emoji_events, () {
+                                setState(() {
+                                  _selectedTab = 3;
+                                });
+                              }, isSelected: _selectedTab == 3),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 40),
-                        _buildInfoSection(),
+                        const SizedBox(height: 8),
+                        Container(height: 1, color: borderColor),
+                        const SizedBox(height: 24),
+                        _buildSelectedSection(),
                       ],
                     ),
                   ),
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildSelectedSection() {
+    switch (_selectedTab) {
+      case 0: // Videos
+        return _buildVideosSection();
+      case 1: // Info
+        return _buildInfoSection();
+      case 2: // Likes
+        return _buildLikesSection();
+      case 3: // Trophy
+        return _buildTrophySection();
+      default:
+        return _buildInfoSection();
+    }
+  }
+
+  Widget _buildVideosSection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Text(
+          'Videos section coming soon',
+          style: TextStyle(color: textColor, fontSize: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLikesSection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Text(
+          'Likes section coming soon',
+          style: TextStyle(color: textColor, fontSize: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrophySection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Text(
+          'Trophy section coming soon',
+          style: TextStyle(color: textColor, fontSize: 16),
+        ),
+      ),
     );
   }
 
@@ -312,8 +403,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ? const Color(0xFF8A8B8F)
         : AppTheme.textSecondaryColorLight;
     final cardColor = isDark ? AppTheme.cardColor : AppTheme.cardColorLight;
-    final borderColor = isDark ? AppTheme.borderColor : AppTheme.borderColorLight;
-    
+    final borderColor = isDark
+        ? AppTheme.borderColor
+        : AppTheme.borderColorLight;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -324,23 +417,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'Goalkeeper',
           '2022-Now',
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 4),
+        _buildCareerDashedLine(),
+        const SizedBox(height: 4),
         _buildCareerItem(
-          'assets/images/Ahly.png',
+          'assets/images/Zamalek.png',
           'Zamalek',
           'Goalkeeper',
           '2018-2022',
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 4),
+        _buildCareerDashedLine(),
+        const SizedBox(height: 4),
         _buildCareerItem(
-          'assets/images/Ahly.png',
+          'assets/images/Zamalek.png',
           'Zamalek',
           'Football player',
           '2015-2018',
         ),
         const SizedBox(height: 32),
         // Player stats section
-        _buildPlayerStat('Heart', '70', 'BPM', Icons.favorite, Colors.red, textColor, secondaryTextColor, cardColor, borderColor),
+        _buildPlayerStat(
+          'Heart',
+          '70',
+          'BPM',
+          Icons.favorite,
+          Colors.red,
+          textColor,
+          secondaryTextColor,
+          cardColor,
+          borderColor,
+        ),
         const SizedBox(height: 16),
         _buildPlayerStat(
           'Age',
@@ -405,6 +512,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildCareerDashedLine() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 14),
+      child: CustomPaint(
+        size: const Size(1, 20),
+        painter: DashedLinePainter(color: const Color(0xFF8A8B8F)),
+      ),
+    );
+  }
+
   Widget _buildCareerItem(
     String logoPath,
     String clubName,
@@ -417,25 +534,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final secondaryTextColor = isDark
         ? const Color(0xFF8A8B8F)
         : AppTheme.textSecondaryColorLight;
-    
+
     return Row(
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset(
             logoPath,
-            width: 50,
-            height: 50,
+            width: 28,
+            height: 28,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
               return Container(
-                width: 50,
-                height: 50,
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(
                   color: Colors.red,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.shield, color: Colors.white),
+                child: const Icon(Icons.shield, color: Colors.white, size: 16),
               );
             },
           ),
@@ -449,22 +566,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 clubName,
                 style: TextStyle(
                   color: textColor,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 position,
-                style: TextStyle(color: secondaryTextColor, fontSize: 14),
+                style: TextStyle(color: secondaryTextColor, fontSize: 12),
               ),
             ],
           ),
         ),
-        Text(
-          years,
-          style: TextStyle(color: secondaryTextColor, fontSize: 14),
-        ),
+        Text(years, style: TextStyle(color: secondaryTextColor, fontSize: 12)),
       ],
     );
   }
@@ -513,10 +627,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 4),
                 Text(
                   unit.isNotEmpty ? '$value $unit' : value,
-                  style: TextStyle(
-                    color: secondaryTextColor,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: secondaryTextColor, fontSize: 14),
                 ),
               ],
             ),
@@ -542,39 +653,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final secondaryTextColor = isDark
         ? const Color(0xFF8A8B8F)
         : AppTheme.textSecondaryColorLight;
-    
+
     return Column(
       children: [
         Text(
           value,
           style: TextStyle(
             color: textColor,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(color: secondaryTextColor, fontSize: 14),
-        ),
+        Text(label, style: TextStyle(color: Colors.white, fontSize: 12)),
       ],
     );
   }
 
-  Widget _buildActionButton(IconData icon, VoidCallback onTap, {Color? color}) {
+  Widget _buildActionButton(
+    IconData icon,
+    VoidCallback onTap, {
+    bool isSelected = false,
+  }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
-    
+
     return SizedBox(
       width: 70,
       height: 48,
       child: IconButton(
-        icon: Icon(icon, color: color ?? textColor),
-        iconSize: 24,
+        icon: Icon(icon, color: isSelected ? AppTheme.accentColor : textColor),
+        iconSize: 22,
         onPressed: onTap,
       ),
     );
   }
+}
+
+class DashedLinePainter extends CustomPainter {
+  final Color color;
+
+  DashedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    const dashHeight = 4.0;
+    const dashSpace = 4.0;
+    const dashCount = 3;
+
+    for (int i = 0; i < dashCount; i++) {
+      double startY = i * (dashHeight + dashSpace);
+      canvas.drawLine(Offset(0, startY), Offset(0, startY + dashHeight), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

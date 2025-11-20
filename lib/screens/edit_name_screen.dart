@@ -121,6 +121,8 @@ class _EditNameScreenState extends State<EditNameScreen> {
                 maxLength: _maxLength,
                 decoration: InputDecoration(
                   border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,

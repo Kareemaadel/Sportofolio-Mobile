@@ -8,6 +8,7 @@ class DataService {
   static const String _urlKey = 'url';
   static const String _userDomainKey = 'userDomain';
   static const String _clubKey = 'club';
+  static const String _roleKey = 'role';
 
   // Club logos mapping
   static const Map<String, String> clubLogos = {
@@ -95,6 +96,17 @@ class DataService {
 
   static String getClubLogo(String clubName) {
     return clubLogos[clubName] ?? 'assets/images/Ahly.png';
+  }
+
+  // Role
+  static Future<String> getRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_roleKey) ?? 'Goalkeeper';
+  }
+
+  static Future<void> setRole(String newRole) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_roleKey, newRole);
   }
 
   // User Domain (coach.com or player.com)

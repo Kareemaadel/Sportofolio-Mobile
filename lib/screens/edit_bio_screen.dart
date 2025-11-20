@@ -111,44 +111,40 @@ class _EditBioScreenState extends State<EditBioScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Container(
-              decoration: BoxDecoration(
-                color: inputBgColor,
-                borderRadius: BorderRadius.circular(8),
+            TextField(
+              controller: _bioController,
+              autofocus: true,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 16,
               ),
-              child: TextField(
-                controller: _bioController,
-                style: TextStyle(color: textColor, fontSize: 16),
-                maxLength: _maxLength,
-                maxLines: 6,
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(16),
-                  counterText: '',
-                  suffixIcon: _bioController.text.isNotEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 8, right: 8),
-                          child: Align(
-                            alignment: Alignment.topRight,
-                            child: IconButton(
-                              icon: Icon(
-                                Icons.cancel,
-                                color: secondaryTextColor,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _bioController.clear();
-                                });
-                              },
-                            ),
-                          ),
-                        )
-                      : null,
+              maxLength: _maxLength,
+              maxLines: 6,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: inputBgColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
                 ),
-                onChanged: (value) {
-                  setState(() {});
-                },
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.all(16),
+                counterText: '',
+                hintText: 'Enter your bio...',
+                hintStyle: TextStyle(
+                  color: secondaryTextColor.withOpacity(0.5),
+                ),
               ),
+              onChanged: (value) {
+                setState(() {});
+              },
             ),
             const SizedBox(height: 8),
             Align(
