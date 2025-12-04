@@ -7,6 +7,10 @@ pubspec.lock
 # Environment variables
 .env
 
+# Firebase Service Account (IMPORTANT - Never commit this!)
+firebase-service-account.json
+*-firebase-adminsdk-*.json
+
 # IDE
 .idea/
 .vscode/
