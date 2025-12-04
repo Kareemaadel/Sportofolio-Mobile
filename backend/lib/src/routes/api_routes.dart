@@ -14,6 +14,7 @@ class ApiRoutes {
 
     // User routes
     router.get('/users', UserController.getAll);
+    router.get('/users/search', UserController.search);
     router.get('/users/<id>', UserController.getById);
     router.post('/users', UserController.create);
     router.put('/users/<id>', UserController.update);

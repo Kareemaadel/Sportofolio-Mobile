@@ -15,13 +15,10 @@ dependencies:
   # HTTP utilities
   http: ^1.1.0
   
-  # Database
-  postgres: ^2.6.2
-  mysql1: ^0.20.0
-  mongo_dart: ^0.9.3
-  
-  # ORM and database utilities
-  drift: ^2.13.2
+  # Firebase (Primary Database & Auth)
+  firebase_admin: ^0.3.0
+  firebase_dart: ^1.0.8
+  firedart: ^0.9.6
   
   # Authentication & Security
   dart_jsonwebtoken: ^2.12.0

@@ -1,77 +1,170 @@
 import 'package:shelf/shelf.dart';
 import 'dart:convert';
+import '../services/user_service.dart';
 
 class UserController {
+  /// Get all users
   static Future<Response> getAll(Request request) async {
-    // TODO: Implement get all users logic
-    final users = [
-      {'id': '1', 'name': 'John Doe', 'email': 'john@example.com'},
-      {'id': '2', 'name': 'Jane Smith', 'email': 'jane@example.com'},
-    ];
+    try {
+      final users = await UserService.getAllUsers();
 
-    return Response.ok(
-      jsonEncode({'users': users}),
-      headers: {'Content-Type': 'application/json'},
-    );
+      final usersList = users.map((user) => user.toJson()).toList();
+
+      return Response.ok(
+        jsonEncode({'users': usersList}),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e) {
+      return Response.internalServerError(
+        body: jsonEncode({'error': 'Failed to fetch users: ${e.toString()}'}),
+        headers: {'Content-Type': 'application/json'},
+      );
+    }
   }
 
+  /// Get user by ID
   static Future<Response> getById(Request request, String id) async {
-    // TODO: Implement get user by id logic
-    final user = {'id': id, 'name': 'John Doe', 'email': 'john@example.com'};
+    try {
+      final user = await UserService.getUserById(id);
 
-    return Response.ok(
-      jsonEncode(user),
-      headers: {'Content-Type': 'application/json'},
-    );
+      if (user == null) {
+        return Response.notFound(
+          jsonEncode({'error': 'User not found'}),
+          headers: {'Content-Type': 'application/json'},
+        );
+      }
+
+      return Response.ok(
+        jsonEncode(user.toJson()),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e) {
+      return Response.internalServerError(
+        body: jsonEncode({'error': 'Failed to fetch user: ${e.toString()}'}),
+        headers: {'Content-Type': 'application/json'},
+      );
+    }
   }
 
+  /// Create new user
   static Future<Response> create(Request request) async {
     try {
       final body = await request.readAsString();
-      final data = jsonDecode(body);
+      final data = jsonDecode(body) as Map<String, dynamic>;
 
-      // TODO: Implement create user logic
-      final user = {
-        'id': '3',
-        'name': data['name'],
-        'email': data['email'],
-      };
+      // Validate required fields
+      if (data['name'] == null || data['email'] == null) {
+        return Response(400,
+          body: jsonEncode({'error': 'Name and email are required'}),
+          headers: {'Content-Type': 'application/json'},
+        );
+      }
+
+      // Check if email already exists
+      final emailExists = await UserService.emailExists(data['email'] as String);
+      if (emailExists) {
+        return Response(400,
+          body: jsonEncode({'error': 'Email already in use'}),
+          headers: {'Content-Type': 'application/json'},
+        );
+      }
+
+      final user = await UserService.createUser(data);
 
       return Response(201,
-        body: jsonEncode(user),
+        body: jsonEncode(user.toJson()),
         headers: {'Content-Type': 'application/json'},
       );
     } catch (e) {
-      return Response(400, body: '{"error": "Invalid request data"}');
+      return Response(400,
+        body: jsonEncode({'error': 'Failed to create user: ${e.toString()}'}),
+        headers: {'Content-Type': 'application/json'},
+      );
     }
   }
 
+  /// Update user
   static Future<Response> update(Request request, String id) async {
     try {
       final body = await request.readAsString();
-      final data = jsonDecode(body);
+      final data = jsonDecode(body) as Map<String, dynamic>;
 
-      // TODO: Implement update user logic
-      final user = {
-        'id': id,
-        'name': data['name'] ?? 'Updated Name',
-        'email': data['email'] ?? 'updated@example.com',
-      };
+      // Remove sensitive fields that shouldn't be updated directly
+      data.remove('id');
+      data.remove('passwordHash');
+      data.remove('createdAt');
+
+      final user = await UserService.updateUser(id, data);
 
       return Response.ok(
-        jsonEncode(user),
+        jsonEncode(user.toJson()),
         headers: {'Content-Type': 'application/json'},
       );
     } catch (e) {
-      return Response(400, body: '{"error": "Invalid request data"}');
+      if (e.toString().contains('not found')) {
+        return Response.notFound(
+          jsonEncode({'error': 'User not found'}),
+          headers: {'Content-Type': 'application/json'},
+        );
+      }
+
+      return Response(400,
+        body: jsonEncode({'error': 'Failed to update user: ${e.toString()}'}),
+        headers: {'Content-Type': 'application/json'},
+      );
     }
   }
 
+  /// Delete user
   static Future<Response> delete(Request request, String id) async {
-    // TODO: Implement delete user logic
-    return Response.ok(
-      jsonEncode({'message': 'User deleted successfully', 'id': id}),
-      headers: {'Content-Type': 'application/json'},
-    );
+    try {
+      // Check if user exists
+      final user = await UserService.getUserById(id);
+      if (user == null) {
+        return Response.notFound(
+          jsonEncode({'error': 'User not found'}),
+          headers: {'Content-Type': 'application/json'},
+        );
+      }
+
+      await UserService.deleteUser(id);
+
+      return Response.ok(
+        jsonEncode({'message': 'User deleted successfully', 'id': id}),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e) {
+      return Response.internalServerError(
+        body: jsonEncode({'error': 'Failed to delete user: ${e.toString()}'}),
+        headers: {'Content-Type': 'application/json'},
+      );
+    }
+  }
+
+  /// Search users by name
+  static Future<Response> search(Request request) async {
+    try {
+      final searchTerm = request.url.queryParameters['q'];
+
+      if (searchTerm == null || searchTerm.isEmpty) {
+        return Response(400,
+          body: jsonEncode({'error': 'Search term (q) is required'}),
+          headers: {'Content-Type': 'application/json'},
+        );
+      }
+
+      final users = await UserService.searchUsersByName(searchTerm);
+      final usersList = users.map((user) => user.toJson()).toList();
+
+      return Response.ok(
+        jsonEncode({'users': usersList, 'count': usersList.length}),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e) {
+      return Response.internalServerError(
+        body: jsonEncode({'error': 'Search failed: ${e.toString()}'}),
+        headers: {'Content-Type': 'application/json'},
+      );
+    }
   }
 }

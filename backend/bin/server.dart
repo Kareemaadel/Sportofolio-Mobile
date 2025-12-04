@@ -27,9 +27,10 @@ void main() async {
   // Initialize database
   try {
     await DatabaseConfig.initialize();
-    _logger.info('Database initialized successfully');
+    _logger.info('Firebase initialized successfully');
   } catch (e) {
-    _logger.severe('Failed to initialize database: $e');
+    _logger.severe('Failed to initialize Firebase: $e');
+    _logger.warning('Server will continue but Firebase features may not work');
   }
 
   // Create router
