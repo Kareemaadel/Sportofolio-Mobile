@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const Spacer(),
-                    // Right side - Notification and Message icons
+                    // Right side - Notification icon
                     IconButton(
                       icon: SvgPicture.asset(
                         'assets/icons/bell.svg',
@@ -144,21 +144,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       onPressed: () {
                         // TODO: Navigate to notifications
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: SvgPicture.asset(
-                        'assets/icons/paper-plane.svg',
-                        width: 22,
-                        height: 22,
-                        colorFilter: ColorFilter.mode(
-                          textColor,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                      onPressed: () {
-                        // TODO: Navigate to messages
                       },
                     ),
                   ],

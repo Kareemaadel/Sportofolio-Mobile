@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/search_screen.dart';
+import 'screens/add_post_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/theme_service.dart';
@@ -78,7 +79,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     _screens = [
       const HomeScreen(),
       const SearchScreen(),
-      const Placeholder(), // Create/Add screen
+      AddPostScreen(onClose: () {
+        setState(() {
+          _currentIndex = 0; // Navigate to home tab
+        });
+      }),
       const Placeholder(), // Apply screen
       ProfileScreen(themeService: widget.themeService),
     ];
