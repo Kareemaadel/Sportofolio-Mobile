@@ -30,6 +30,8 @@ void main() async {
     _logger.info('Firebase initialized successfully');
   } catch (e) {
     _logger.warning('Server will continue but Firebase features may not work');
+  }
+
   final router = Router();
 
   // Add API routes

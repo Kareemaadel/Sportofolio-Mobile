@@ -1,4 +1,6 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
@@ -6,69 +8,57 @@ import '../services/theme_service.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final ThemeService? themeService;
-
-  const ProfileScreen({super.key, this.themeService});
+  final dynamic themeService;
+  const ProfileScreen({Key? key, this.themeService}) : super(key: key);
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  // Firebase instances
+class _ProfileScreenState extends State<ProfileScreen>
+    with SingleTickerProviderStateMixin {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // User data
-  String _name = '';
-  String _email = '';
-  String _bio = '';
-  String _username = '';
-  String _role = '';
-  String _club = '';
-  String _profileImageUrl = '';
-  int _followingCount = 0;
-  int _followersCount = 0;
-  int _likesCount = 0;
-
   bool _isLoading = true;
-  int _selectedTab = 1; // 0: Videos, 1: Info, 2: Likes, 3: Trophy
+  Map<String, dynamic>? _userData;
+  late TabController _tabController;
+  int _selectedTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadProfileData();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      setState(() {
+        _selectedTabIndex = _tabController.index;
+      });
+    });
+    _loadUserData();
   }
 
-  Future<void> _loadProfileData() async {
-    try {
-      // Get current user
-      User? currentUser = _auth.currentUser;
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
+  Future<void> _loadUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      User? currentUser = _auth.currentUser;
       if (currentUser != null) {
-        // Fetch user data from Firestore
-        DocumentSnapshot userDoc = await _firestore
-            .collection('users')
-            .doc(currentUser.uid)
-            .get();
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(currentUser.uid).get();
 
         if (userDoc.exists) {
-          Map<String, dynamic> userData =
-              userDoc.data() as Map<String, dynamic>;
-
           setState(() {
-            _name = userData['name'] ?? '';
-            _email = userData['email'] ?? '';
-            _bio = userData['bio'] ?? '';
-            _username = userData['username'] ?? '';
-            _role = userData['role'] ?? '';
-            _club = userData['club'] ?? '';
-            _profileImageUrl = userData['profileImageUrl'] ?? '';
+            _userData = userDoc.data() as Map<String, dynamic>?;
             _isLoading = false;
           });
-
-          // Fetch social counts (followers/following)
-          await _loadSocialCounts(currentUser.uid);
         } else {
           setState(() {
             _isLoading = false;
@@ -80,35 +70,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     } catch (e) {
-      print('Error loading profile data: $e');
+      print('Error loading user data: $e');
       setState(() {
         _isLoading = false;
       });
-    }
-  }
-
-  Future<void> _loadSocialCounts(String userId) async {
-    try {
-      // Count followers
-      QuerySnapshot followersSnapshot = await _firestore
-          .collection('followers')
-          .doc(userId)
-          .collection('userFollowers')
-          .get();
-
-      // Count following
-      QuerySnapshot followingSnapshot = await _firestore
-          .collection('following')
-          .doc(userId)
-          .collection('userFollowing')
-          .get();
-
-      setState(() {
-        _followersCount = followersSnapshot.docs.length;
-        _followingCount = followingSnapshot.docs.length;
-      });
-    } catch (e) {
-      print('Error loading social counts: $e');
     }
   }
 
@@ -120,777 +85,501 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ? AppTheme.backgroundColor
         : AppTheme.backgroundColorLight;
     final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
-    final secondaryTextColor = isDark
-        ? const Color(0xFF8A8B8F)
+    final textSecondaryColor = isDark
+        ? AppTheme.textSecondaryColor
         : AppTheme.textSecondaryColorLight;
     final cardColor = isDark ? AppTheme.cardColor : AppTheme.cardColorLight;
-    final borderColor = isDark
-        ? AppTheme.borderColor
-        : AppTheme.borderColorLight;
+
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentColor),
+          ),
+        ),
+      );
+    }
+
+    final String name = _userData?['name'] ?? 'User Name';
+    final String username = _userData?['username'] ?? '';
+    final String bio = _userData?['bio'] ?? '';
+    final String role = _userData?['role'] ?? '';
+    final String club = _userData?['club'] ?? '';
+    final String profileImageUrl = _userData?['profileImageUrl'] ?? '';
+    final String email = _userData?['email'] ?? _auth.currentUser?.email ?? '';
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: AppTheme.accentColor),
-            )
-          : CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        height: 180,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: const AssetImage('assets/images/cover.webp'),
-                            fit: BoxFit.cover,
-                            colorFilter: ColorFilter.mode(
-                              Colors.black.withOpacity(0.3),
-                              BlendMode.darken,
-                            ),
-                            onError: (exception, stackTrace) {},
-                          ),
-                        ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                backgroundColor.withOpacity(0.7),
-                                backgroundColor,
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Floating Navigation Bar
-                      Positioned(
-                        top: 40,
-                        left: 16,
-                        right: 16,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
-                                shape: BoxShape.circle,
-                              ),
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.arrow_back,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.5),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: IconButton(
-                                    icon: const Icon(
-                                      Icons.qr_code,
-                                      color: Colors.white,
-                                    ),
-                                    onPressed: () {
-                                      // TODO: QR code action
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.5),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: IconButton(
-                                    icon: const Icon(
-                                      Icons.settings,
-                                      color: Colors.white,
-                                    ),
-                                    onPressed: () async {
-                                      final result = await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => SettingsScreen(
-                                            themeService: widget.themeService,
-                                          ),
-                                        ),
-                                      );
-                                      // Reload profile if settings were updated
-                                      if (result == true) {
-                                        _loadProfileData();
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Positioned(
-                        left: 20,
-                        bottom: -75,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: backgroundColor,
-                              width: 4,
-                            ),
-                          ),
-                          child: CircleAvatar(
-                            radius: 70,
-                            backgroundColor: cardColor,
-<<<<<<< HEAD
-                            backgroundImage: _profileImageUrl.isNotEmpty
-                                ? NetworkImage(_profileImageUrl)
-                            child: _profileImageUrl.isEmpty
-                                ? Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: textColor.withOpacity(0.5),
-                                  )
-                                : null,
-=======
-                            backgroundImage: const AssetImage(
-                              'assets/images/profile pic.png',
-                      Positioned(
-                        right: 20,
-                        bottom: -75,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-<<<<<<< HEAD
-                          child: (_role.isNotEmpty || _club.isNotEmpty)
-                              ? Row(
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                          _role.isNotEmpty && _club.isNotEmpty
-                                              ? '$_role • $_club'
-                                              : _role.isNotEmpty
-                                              ? _role
-                                              : _club,
-                                          style: TextStyle(
-                                            color: textColor,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        // Username removed from under club/role
-                                      ],
-                                    ),
-                                  ],
-                                )
-                              : SizedBox(),
-=======
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: Image.asset(
-                                  DataService.getClubLogo(_club),
-                                  width: 40,
-                                  height: 40,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 70),
-                        Text(
-<<<<<<< HEAD
-                          _name.isNotEmpty ? _name : 'User',
-=======
-                          _name.isNotEmpty ? _name : 'Zeyad Waleed',
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-<<<<<<< HEAD
-                        if (_username.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              '@${_username}',
-                              style: TextStyle(
-                                color: secondaryTextColor,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-=======
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
-                        const SizedBox(height: 8),
-                        Text(
-                          _bio.isNotEmpty
-                              ? _bio
-<<<<<<< HEAD
-                              : 'No bio yet. Add one in settings!',
-                          style: TextStyle(
-                            color: _bio.isNotEmpty
-                                ? secondaryTextColor
-                                : secondaryTextColor.withOpacity(0.6),
-                            fontSize: 12,
-                            height: 1.5,
-                            fontStyle: _bio.isEmpty
-                                ? FontStyle.italic
-                                : FontStyle.normal,
-=======
-                              : 'Talented goalkeeper currently playing for Al Ahly, one of Egypt\'s most prestigious football clubs. Born and raised in Cairo',
-                          style: TextStyle(
-                            color: secondaryTextColor,
-                            fontSize: 12,
-                            height: 1.5,
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-<<<<<<< HEAD
-                            _buildStatColumn('$_followingCount', 'Following'),
-                            Container(width: 1, height: 40, color: borderColor),
-                            _buildStatColumn('$_followersCount', 'Followers'),
-                            Container(width: 1, height: 40, color: borderColor),
-                            _buildStatColumn('$_likesCount', 'Likes'),
-=======
-                            _buildStatColumn('351', 'Following'),
-                            Container(width: 1, height: 40, color: borderColor),
-                            _buildStatColumn('1,457', 'Followers'),
-                            Container(width: 1, height: 40, color: borderColor),
-                            _buildStatColumn('64.7K', 'Likes'),
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Container(height: 1, color: borderColor),
-                        const SizedBox(height: 8),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _buildActionButton(Icons.play_arrow, () {
-                                setState(() {
-                                  _selectedTab = 0;
-                                });
-                              }, isSelected: _selectedTab == 0),
-                              _buildActionButton(Icons.info_outline, () {
-                                setState(() {
-                                  _selectedTab = 1;
-                                });
-                              }, isSelected: _selectedTab == 1),
-                              _buildActionButton(
-                                Icons.favorite_border,
-                                () {
-                                  setState(() {
-                                    _selectedTab = 2;
-                                  });
-                                },
-                                isSelected: _selectedTab == 2,
-                              ),
-                              _buildActionButton(Icons.emoji_events, () {
-                                setState(() {
-                                  _selectedTab = 3;
-                                });
-                              }, isSelected: _selectedTab == 3),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(height: 1, color: borderColor),
-                        const SizedBox(height: 24),
-                        _buildSelectedSection(),
-                      ],
-                    ),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _loadUserData,
+          color: AppTheme.accentColor,
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // App Bar
+              SliverAppBar(
+                backgroundColor: backgroundColor,
+                elevation: 0,
+                pinned: true,
+                floating: false,
+                expandedHeight: 0,
+                title: Text(
+                  name,
+                  style: GoogleFonts.poppins(
+                    color: textColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
-            ),
-    );
-  }
+                centerTitle: true,
+                leading: IconButton(
+                  icon: Icon(Icons.arrow_back, color: textColor),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                actions: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.settings_outlined,
+                      color: textColor,
+                      size: 24,
+                    ),
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SettingsScreen(
+                            themeService: widget.themeService as ThemeService?,
+                          ),
+                        ),
+                      );
+                      if (result == true) {
+                        _loadUserData();
+                      }
+                    },
+                  ),
+                ],
+              ),
 
-  Widget _buildSelectedSection() {
-    switch (_selectedTab) {
-      case 0: // Videos
-        return _buildVideosSection();
-      case 1: // Info
-        return _buildInfoSection();
-      case 2: // Likes
-        return _buildLikesSection();
-      case 3: // Trophy
-        return _buildTrophySection();
-      default:
-        return _buildInfoSection();
-    }
-  }
-
-  Widget _buildVideosSection() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Text(
-          'Videos section coming soon',
-          style: TextStyle(color: textColor, fontSize: 16),
-<<<<<<< HEAD
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLikesSection() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Text(
-          'Likes section coming soon',
-          style: TextStyle(color: textColor, fontSize: 16),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTrophySection() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Text(
-          'Trophy section coming soon',
-          style: TextStyle(color: textColor, fontSize: 16),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoSection() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
-    final secondaryTextColor = isDark
-        ? const Color(0xFF8A8B8F)
-        : AppTheme.textSecondaryColorLight;
-    final cardColor = isDark ? AppTheme.cardColor : AppTheme.cardColorLight;
-    final borderColor = isDark
-        ? AppTheme.borderColor
-        : AppTheme.borderColorLight;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Career history section - placeholder for now
-        // TODO: Fetch career history from user profile
-        if (_role.isNotEmpty)
-          _buildCareerItem(
-            'assets/images/Al Ahly.png',
-            _role,
-            'Current Position',
-            'Now',
-          ),
-        if (_role.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(40),
-              child: Text(
-                'No career information yet.\nAdd your role in settings!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: secondaryTextColor.withOpacity(0.6),
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
+              // Profile Content
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    
+                    // Profile Picture
+                    _buildProfilePicture(profileImageUrl, cardColor, textColor),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Name
+                    Text(
+                      name,
+                      style: GoogleFonts.poppins(
+                        color: textColor,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    
+                    // Username
+                    if (username.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '@$username',
+                        style: GoogleFonts.poppins(
+                          color: textSecondaryColor,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                    
+                    // Role and Club
+                    if (role.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppTheme.accentColor.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Text(
+                          club.isNotEmpty ? '$role • $club' : role,
+                          style: GoogleFonts.poppins(
+                            color: AppTheme.accentColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                    
+                    // Bio
+                    if (bio.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text(
+                          bio,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            color: textColor,
+                            fontSize: 14,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Stats Row
+                    _buildStatsRow(textColor, textSecondaryColor),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Edit Profile Button
+                    _buildEditProfileButton(textColor, cardColor),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Divider
+                    Divider(
+                      color: isDark
+                          ? AppTheme.borderColor
+                          : AppTheme.borderColorLight,
+                      height: 1,
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ),
-=======
-        ),
-      ),
-    );
-  }
 
-  Widget _buildLikesSection() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Text(
-          'Likes section coming soon',
-          style: TextStyle(color: textColor, fontSize: 16),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTrophySection() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Text(
-          'Trophy section coming soon',
-          style: TextStyle(color: textColor, fontSize: 16),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoSection() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
-    final secondaryTextColor = isDark
-        ? const Color(0xFF8A8B8F)
-        : AppTheme.textSecondaryColorLight;
-    final cardColor = isDark ? AppTheme.cardColor : AppTheme.cardColorLight;
-    final borderColor = isDark
-        ? AppTheme.borderColor
-        : AppTheme.borderColorLight;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Career history section
-        _buildCareerItem(
-          DataService.getClubLogo(_club),
-          _club.isEmpty ? 'Al Ahly' : _club,
-          'Goalkeeper',
-          '2022-Now',
-        ),
-        const SizedBox(height: 4),
-        _buildCareerDashedLine(),
-        const SizedBox(height: 4),
-        _buildCareerItem(
-          'assets/images/Zamalek.png',
-          'Zamalek',
-          'Goalkeeper',
-          '2018-2022',
-        ),
-        const SizedBox(height: 4),
-        _buildCareerDashedLine(),
-        const SizedBox(height: 4),
-        _buildCareerItem(
-          'assets/images/Zamalek.png',
-          'Zamalek',
-          'Football player',
-          '2015-2018',
-        ),
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
-        const SizedBox(height: 32),
-        // Player stats section
-        _buildPlayerStat(
-          'Heart',
-          '70',
-          'BPM',
-          Icons.favorite,
-          Colors.red,
-          textColor,
-          secondaryTextColor,
-          cardColor,
-          borderColor,
-        ),
-        const SizedBox(height: 16),
-        _buildPlayerStat(
-          'Age',
-          '18',
-          'years',
-          Icons.person,
-          AppTheme.accentColor,
-          textColor,
-          secondaryTextColor,
-          cardColor,
-          borderColor,
-        ),
-        const SizedBox(height: 16),
-        _buildPlayerStat(
-          'Used Foot',
-          'Right, Left',
-          '',
-          Icons.sports_soccer,
-          AppTheme.accentColor,
-          textColor,
-          secondaryTextColor,
-          cardColor,
-          borderColor,
-        ),
-        const SizedBox(height: 16),
-        _buildPlayerStat(
-          'Length',
-          '190',
-          'cm',
-          Icons.height,
-          AppTheme.accentColor,
-          textColor,
-          secondaryTextColor,
-          cardColor,
-          borderColor,
-        ),
-        const SizedBox(height: 16),
-        _buildPlayerStat(
-          'Calories',
-          '620.9',
-          'kcal',
-          Icons.local_fire_department,
-          AppTheme.accentColor,
-          textColor,
-          secondaryTextColor,
-          cardColor,
-          borderColor,
-        ),
-        const SizedBox(height: 16),
-        _buildPlayerStat(
-          'Weight',
-          '91',
-          'gm',
-          Icons.monitor_weight,
-          AppTheme.accentColor,
-          textColor,
-          secondaryTextColor,
-          cardColor,
-          borderColor,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCareerDashedLine() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 14),
-      child: CustomPaint(
-        size: const Size(1, 20),
-        painter: DashedLinePainter(color: const Color(0xFF8A8B8F)),
-      ),
-    );
-  }
-
-  Widget _buildCareerItem(
-    String logoPath,
-    String clubName,
-    String position,
-    String years,
-  ) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
-    final secondaryTextColor = isDark
-        ? const Color(0xFF8A8B8F)
-        : AppTheme.textSecondaryColorLight;
-
-    return Row(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.asset(
-            logoPath,
-            width: 28,
-            height: 28,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.shield, color: Colors.white, size: 16),
-              );
-            },
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                clubName,
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+              // Tab Bar
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _StickyTabBarDelegate(
+                  TabBar(
+                    controller: _tabController,
+                    indicatorColor: AppTheme.accentColor,
+                    indicatorWeight: 2,
+                    labelColor: textColor,
+                    unselectedLabelColor: textSecondaryColor,
+                    labelStyle: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    unselectedLabelStyle: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                    ),
+                    tabs: [
+                      Tab(
+                        icon: Icon(
+                          Icons.grid_on,
+                          color: _selectedTabIndex == 0
+                              ? textColor
+                              : textSecondaryColor,
+                        ),
+                      ),
+                      Tab(
+                        icon: Icon(
+                          Icons.bookmark_border,
+                          color: _selectedTabIndex == 1
+                              ? textColor
+                              : textSecondaryColor,
+                        ),
+                      ),
+                      Tab(
+                        icon: Icon(
+                          Icons.video_library_outlined,
+                          color: _selectedTabIndex == 2
+                              ? textColor
+                              : textSecondaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  backgroundColor,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                position,
-                style: TextStyle(color: secondaryTextColor, fontSize: 12),
+
+              // Tab Content
+              SliverFillRemaining(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildPostsGrid(textColor, textSecondaryColor),
+                    _buildSavedGrid(textSecondaryColor),
+                    _buildVideosGrid(textSecondaryColor),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-        Text(years, style: TextStyle(color: secondaryTextColor, fontSize: 12)),
+      ),
+    );
+  }
+
+  Widget _buildProfilePicture(
+      String profileImageUrl, Color cardColor, Color textColor) {
+    return CircleAvatar(
+      radius: 50,
+      backgroundColor: cardColor,
+      backgroundImage: profileImageUrl.isNotEmpty
+          ? NetworkImage(profileImageUrl)
+          : null,
+      child: profileImageUrl.isEmpty
+          ? Icon(
+              Icons.person,
+              size: 50,
+              color: textColor.withOpacity(0.5),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildStatsRow(Color textColor, Color textSecondaryColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatItem('42', 'Posts', textColor, textSecondaryColor),
+          Container(
+            width: 1,
+            height: 40,
+            color: textSecondaryColor.withOpacity(0.2),
+          ),
+          _buildStatItem('1.2K', 'Followers', textColor, textSecondaryColor),
+          Container(
+            width: 1,
+            height: 40,
+            color: textSecondaryColor.withOpacity(0.2),
+          ),
+          _buildStatItem('283', 'Following', textColor, textSecondaryColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(
+      String count, String label, Color textColor, Color textSecondaryColor) {
+    return Column(
+      children: [
+        Text(
+          count,
+          style: GoogleFonts.poppins(
+            color: textColor,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            color: textSecondaryColor,
+            fontSize: 12,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildPlayerStat(
-    String label,
-    String value,
-    String unit,
-    IconData icon,
-    Color iconColor,
-    Color textColor,
-    Color secondaryTextColor,
-    Color cardColor,
-    Color borderColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: 1),
-      ),
+  Widget _buildEditProfileButton(Color textColor, Color cardColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 24),
-          ),
-          const SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            child: ElevatedButton(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SettingsScreen(
+                      themeService: widget.themeService as ThemeService?,
+                    ),
+                  ),
+                );
+                if (result == true) {
+                  _loadUserData();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: cardColor,
+                foregroundColor: textColor,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(
+                    color: textColor.withOpacity(0.2),
+                    width: 1,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  unit.isNotEmpty ? '$value $unit' : value,
-                  style: TextStyle(color: secondaryTextColor, fontSize: 14),
+              ),
+              child: Text(
+                'Edit Profile',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
+              ),
             ),
           ),
-          const SizedBox(width: 16),
-          Text(
-            'add here..',
-            style: TextStyle(
-              color: textColor.withOpacity(0.5),
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
+          const SizedBox(width: 12),
+          ElevatedButton(
+            onPressed: () {
+              // Share profile functionality
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: cardColor,
+              foregroundColor: textColor,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(
+                  color: textColor.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
             ),
+            child: Icon(Icons.share_outlined, size: 20),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatColumn(String value, String label) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
-    final secondaryTextColor = isDark
-        ? const Color(0xFF8A8B8F)
-        : AppTheme.textSecondaryColorLight;
+  Widget _buildPostsGrid(Color textColor, Color textSecondaryColor) {
+    // Sample posts data - replace with actual data from Firebase
+    final posts = List.generate(12, (index) => index);
+    
+    if (posts.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.grid_on,
+        title: 'No Posts Yet',
+        subtitle: 'Start sharing your sports moments!',
+        textColor: textColor,
+        textSecondaryColor: textSecondaryColor,
+      );
+    }
 
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
+    return GridView.builder(
+      padding: const EdgeInsets.all(2),
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
+      ),
+      itemCount: posts.length,
+      itemBuilder: (context, index) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppTheme.cardColor,
+            image: DecorationImage(
+              image: AssetImage('assets/images/post.png'),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(color: Colors.white, fontSize: 12)),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildActionButton(
-    IconData icon,
-    VoidCallback onTap, {
-    bool isSelected = false,
-  }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+  Widget _buildSavedGrid(Color textSecondaryColor) {
+    return _buildEmptyState(
+      icon: Icons.bookmark_border,
+      title: 'No Saved Posts',
+      subtitle: 'Save posts you want to see later',
+      textColor: AppTheme.textColor,
+      textSecondaryColor: textSecondaryColor,
+    );
+  }
 
-    return SizedBox(
-      width: 70,
-      height: 48,
-      child: IconButton(
-        icon: Icon(icon, color: isSelected ? AppTheme.accentColor : textColor),
-        iconSize: 22,
-        onPressed: onTap,
+  Widget _buildVideosGrid(Color textSecondaryColor) {
+    return _buildEmptyState(
+      icon: Icons.video_library_outlined,
+      title: 'No Videos',
+      subtitle: 'Upload your game highlights',
+      textColor: AppTheme.textColor,
+      textSecondaryColor: textSecondaryColor,
+    );
+  }
+
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color textColor,
+    required Color textSecondaryColor,
+  }) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 64,
+            color: textSecondaryColor.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              color: textColor,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: GoogleFonts.poppins(
+              color: textSecondaryColor,
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class DashedLinePainter extends CustomPainter {
-  final Color color;
+class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar tabBar;
+  final Color backgroundColor;
 
-  DashedLinePainter({required this.color});
+  _StickyTabBarDelegate(this.tabBar, this.backgroundColor);
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
+  double get minExtent => tabBar.preferredSize.height;
 
-    const dashHeight = 4.0;
-    const dashSpace = 4.0;
-    const dashCount = 3;
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
 
-    for (int i = 0; i < dashCount; i++) {
-      double startY = i * (dashHeight + dashSpace);
-      canvas.drawLine(Offset(0, startY), Offset(0, startY + dashHeight), paint);
-    }
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: backgroundColor,
+      child: tabBar,
+    );
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) {
+    return tabBar != oldDelegate.tabBar;
+  }
 }
