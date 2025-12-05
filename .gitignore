@@ -53,3 +53,13 @@ GoogleService-Info.plist
 pubspec.lock
 .vscode/
 *.log
+
+
+# Environment variables - IMPORTANT: Keep credentials safe!
+.env
+.env.*
+!.env.example
+
+# Cloudinary config (if not using .env)
+lib/config/cloudinary_config.dart
+!lib/config/cloudinary_config.example.dart

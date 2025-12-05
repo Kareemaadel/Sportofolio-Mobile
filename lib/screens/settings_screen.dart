@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 import '../services/theme_service.dart';
+import '../services/cloudinary_service.dart';
 import '../screens/login_screen.dart';
 import 'edit_name_screen.dart';
 import 'edit_username_screen.dart';
@@ -22,6 +22,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  // Cloudinary service
+  final CloudinaryService _cloudinaryService = CloudinaryService();
+  
   // --- Image picker and upload methods (must be at top for reference) ---
   Future<void> _uploadProfileImage(XFile imageFile) async {
     setState(() {
@@ -30,44 +33,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       User? currentUser = _auth.currentUser;
       if (currentUser != null) {
-        final storageRef = FirebaseStorage.instance.ref().child(
-          'profile_images/${currentUser.uid}.jpg',
-        );
+        // Upload to Cloudinary
         final file = File(imageFile.path);
         if (!file.existsSync()) {
           throw Exception('Selected image file does not exist.');
         }
-        final uploadTask = storageRef.putFile(file);
-        final snapshot = await uploadTask;
-        if (snapshot.state == TaskState.success) {
-          final downloadUrl = await storageRef.getDownloadURL();
-          setState(() {
-            _profileImageUrl = downloadUrl;
-          });
-          await _firestore.collection('users').doc(currentUser.uid).update({
-            'profileImageUrl': downloadUrl,
-          });
+        
+        // Upload to Cloudinary with profile folder
+        final downloadUrl = await _cloudinaryService.uploadImage(
+          file,
+          folder: 'sportofolio/profiles',
+        );
+        
+        if (downloadUrl == null) {
+          throw Exception('Failed to upload image to Cloudinary');
+        }
+        
+        setState(() {
+          _profileImageUrl = downloadUrl;
+        });
+        
+        await _firestore.collection('users').doc(currentUser.uid).update({
+          'profileImageUrl': downloadUrl,
+        });
+        
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Profile image updated!'),
               backgroundColor: AppTheme.successColor,
             ),
           );
-        } else {
-          throw Exception('Upload failed: ${snapshot.state}');
         }
       }
     } catch (e) {
       print('Error uploading image: $e');
-      String errorMsg = e is FirebaseException
-          ? e.message ?? e.code
-          : e.toString();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error uploading image: $errorMsg'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error uploading image: ${e.toString()}'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
     } finally {
       setState(() {
         _isSaving = false;

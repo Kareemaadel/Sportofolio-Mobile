@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 import '../services/theme_service.dart';
+import '../services/posts_service.dart';
+import '../models/post.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -19,9 +21,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     with SingleTickerProviderStateMixin {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PostsService _postsService = PostsService();
 
-  bool _isLoading = true;
-  Map<String, dynamic>? _userData;
   late TabController _tabController;
   int _selectedTabIndex = 0;
 
@@ -34,7 +35,6 @@ class _ProfileScreenState extends State<ProfileScreen>
         _selectedTabIndex = _tabController.index;
       });
     });
-    _loadUserData();
   }
 
   @override
@@ -43,38 +43,12 @@ class _ProfileScreenState extends State<ProfileScreen>
     super.dispose();
   }
 
-  Future<void> _loadUserData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      User? currentUser = _auth.currentUser;
-      if (currentUser != null) {
-        DocumentSnapshot userDoc =
-            await _firestore.collection('users').doc(currentUser.uid).get();
-
-        if (userDoc.exists) {
-          setState(() {
-            _userData = userDoc.data() as Map<String, dynamic>?;
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('Error loading user data: $e');
-      setState(() {
-        _isLoading = false;
-      });
+  Stream<DocumentSnapshot>? _getUserDataStream() {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      return _firestore.collection('users').doc(currentUser.uid).snapshots();
     }
+    return null;
   }
 
   @override
@@ -90,241 +64,259 @@ class _ProfileScreenState extends State<ProfileScreen>
         : AppTheme.textSecondaryColorLight;
     final cardColor = isDark ? AppTheme.cardColor : AppTheme.cardColorLight;
 
-    if (_isLoading) {
+    final userDataStream = _getUserDataStream();
+
+    if (userDataStream == null) {
       return Scaffold(
         backgroundColor: backgroundColor,
         body: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentColor),
+          child: Text(
+            'Please log in to view profile',
+            style: GoogleFonts.poppins(
+              color: textColor,
+              fontSize: 16,
+            ),
           ),
         ),
       );
     }
 
-    final String name = _userData?['name'] ?? 'User Name';
-    final String username = _userData?['username'] ?? '';
-    final String bio = _userData?['bio'] ?? '';
-    final String role = _userData?['role'] ?? '';
-    final String club = _userData?['club'] ?? '';
-    final String profileImageUrl = _userData?['profileImageUrl'] ?? '';
-    final String email = _userData?['email'] ?? _auth.currentUser?.email ?? '';
+    return StreamBuilder<DocumentSnapshot>(
+      stream: userDataStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            backgroundColor: backgroundColor,
+            body: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentColor),
+              ),
+            ),
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadUserData,
-          color: AppTheme.accentColor,
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // App Bar
-              SliverAppBar(
-                backgroundColor: backgroundColor,
-                elevation: 0,
-                pinned: true,
-                floating: false,
-                expandedHeight: 0,
-                title: Text(
-                  name,
-                  style: GoogleFonts.poppins(
-                    color: textColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: backgroundColor,
+            body: Center(
+              child: Text(
+                'Error loading profile',
+                style: GoogleFonts.poppins(
+                  color: textColor,
+                  fontSize: 16,
                 ),
-                centerTitle: true,
-                leading: IconButton(
-                  icon: Icon(Icons.arrow_back, color: textColor),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                actions: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.settings_outlined,
+              ),
+            ),
+          );
+        }
+
+        final userData = snapshot.data?.data() as Map<String, dynamic>?;
+        final String name = userData?['name'] ?? 'User Name';
+        final String username = userData?['username'] ?? '';
+        final String bio = userData?['bio'] ?? '';
+        final String role = userData?['role'] ?? '';
+        final String club = userData?['club'] ?? '';
+        final String profileImageUrl = userData?['profileImageUrl'] ?? '';
+
+        return Scaffold(
+          backgroundColor: backgroundColor,
+          body: SafeArea(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // App Bar
+                SliverAppBar(
+                  backgroundColor: backgroundColor,
+                  elevation: 0,
+                  pinned: true,
+                  floating: false,
+                  expandedHeight: 0,
+                  title: Text(
+                    name,
+                    style: GoogleFonts.poppins(
                       color: textColor,
-                      size: 24,
-                    ),
-                    onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SettingsScreen(
-                            themeService: widget.themeService as ThemeService?,
-                          ),
-                        ),
-                      );
-                      if (result == true) {
-                        _loadUserData();
-                      }
-                    },
-                  ),
-                ],
-              ),
-
-              // Profile Content
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    
-                    // Profile Picture
-                    _buildProfilePicture(profileImageUrl, cardColor, textColor),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Name
-                    Text(
-                      name,
-                      style: GoogleFonts.poppins(
-                        color: textColor,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    
-                    // Username
-                    if (username.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        '@$username',
-                        style: GoogleFonts.poppins(
-                          color: textSecondaryColor,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                    
-                    // Role and Club
-                    if (role.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.accentColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppTheme.accentColor.withOpacity(0.3),
-                          ),
-                        ),
-                        child: Text(
-                          club.isNotEmpty ? '$role • $club' : role,
-                          style: GoogleFonts.poppins(
-                            color: AppTheme.accentColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                    
-                    // Bio
-                    if (bio.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Text(
-                          bio,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            color: textColor,
-                            fontSize: 14,
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Stats Row
-                    _buildStatsRow(textColor, textSecondaryColor),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Edit Profile Button
-                    _buildEditProfileButton(textColor, cardColor),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Divider
-                    Divider(
-                      color: isDark
-                          ? AppTheme.borderColor
-                          : AppTheme.borderColorLight,
-                      height: 1,
-                    ),
-                  ],
-                ),
-              ),
-
-              // Tab Bar
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _StickyTabBarDelegate(
-                  TabBar(
-                    controller: _tabController,
-                    indicatorColor: AppTheme.accentColor,
-                    indicatorWeight: 2,
-                    labelColor: textColor,
-                    unselectedLabelColor: textSecondaryColor,
-                    labelStyle: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
-                    unselectedLabelStyle: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.normal,
+                  ),
+                  centerTitle: true,
+                  leading: IconButton(
+                    icon: Icon(Icons.arrow_back, color: textColor),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.settings_outlined,
+                        color: textColor,
+                        size: 24,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SettingsScreen(
+                              themeService: widget.themeService as ThemeService?,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    tabs: [
-                      Tab(
-                        icon: Icon(
-                          Icons.grid_on,
-                          color: _selectedTabIndex == 0
-                              ? textColor
-                              : textSecondaryColor,
+                  ],
+                ),
+
+                // Profile Content
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      
+                      // Profile Picture
+                      _buildProfilePicture(profileImageUrl, cardColor, textColor),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Username (main title)
+                      Text(
+                        username.isNotEmpty ? '@$username' : name,
+                        style: GoogleFonts.poppins(
+                          color: textColor,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Tab(
-                        icon: Icon(
-                          Icons.bookmark_border,
-                          color: _selectedTabIndex == 1
-                              ? textColor
-                              : textSecondaryColor,
+                      
+                      // Role and Club
+                      if (role.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.accentColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppTheme.accentColor.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Text(
+                            club.isNotEmpty ? '$role • $club' : role,
+                            style: GoogleFonts.poppins(
+                              color: AppTheme.accentColor,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                      ),
-                      Tab(
-                        icon: Icon(
-                          Icons.video_library_outlined,
-                          color: _selectedTabIndex == 2
-                              ? textColor
-                              : textSecondaryColor,
+                      ],
+                      
+                      // Bio
+                      if (bio.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            bio,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              color: textColor,
+                              fontSize: 14,
+                              height: 1.5,
+                            ),
+                          ),
                         ),
+                      ],
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Stats Row
+                      _buildStatsRow(userData?['uid'] ?? _auth.currentUser?.uid ?? '', textColor, textSecondaryColor),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Edit Profile Button
+                      _buildEditProfileButton(textColor, cardColor),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Divider
+                      Divider(
+                        color: isDark
+                            ? AppTheme.borderColor
+                            : AppTheme.borderColorLight,
+                        height: 1,
                       ),
                     ],
                   ),
-                  backgroundColor,
                 ),
-              ),
 
-              // Tab Content
-              SliverFillRemaining(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildPostsGrid(textColor, textSecondaryColor),
-                    _buildSavedGrid(textSecondaryColor),
-                    _buildVideosGrid(textSecondaryColor),
-                  ],
+                // Tab Bar
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _StickyTabBarDelegate(
+                    TabBar(
+                      controller: _tabController,
+                      indicatorColor: AppTheme.accentColor,
+                      indicatorWeight: 2,
+                      labelColor: textColor,
+                      unselectedLabelColor: textSecondaryColor,
+                      labelStyle: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      unselectedLabelStyle: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.normal,
+                      ),
+                      tabs: [
+                        Tab(
+                          icon: Icon(
+                            Icons.grid_on,
+                            color: _selectedTabIndex == 0
+                                ? textColor
+                                : textSecondaryColor,
+                          ),
+                        ),
+                        Tab(
+                          icon: Icon(
+                            Icons.bookmark_border,
+                            color: _selectedTabIndex == 1
+                                ? textColor
+                                : textSecondaryColor,
+                          ),
+                        ),
+                        Tab(
+                          icon: Icon(
+                            Icons.video_library_outlined,
+                            color: _selectedTabIndex == 2
+                                ? textColor
+                                : textSecondaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor,
+                  ),
                 ),
-              ),
-            ],
+
+                // Tab Content
+                SliverFillRemaining(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildPostsGrid(userData?['uid'] ?? _auth.currentUser?.uid ?? '', textColor, textSecondaryColor),
+                      _buildSavedGrid(textSecondaryColor),
+                      _buildVideosGrid(textSecondaryColor),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -346,13 +338,24 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildStatsRow(Color textColor, Color textSecondaryColor) {
+  Widget _buildStatsRow(String userId, Color textColor, Color textSecondaryColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('42', 'Posts', textColor, textSecondaryColor),
+          FutureBuilder<int>(
+            future: _postsService.getUserPostsCount(userId),
+            builder: (context, snapshot) {
+              final count = snapshot.data ?? 0;
+              return _buildStatItem(
+                count.toString(), 
+                'Posts', 
+                textColor, 
+                textSecondaryColor
+              );
+            },
+          ),
           Container(
             width: 1,
             height: 40,
@@ -401,8 +404,8 @@ class _ProfileScreenState extends State<ProfileScreen>
         children: [
           Expanded(
             child: ElevatedButton(
-              onPressed: () async {
-                final result = await Navigator.push(
+              onPressed: () {
+                Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => SettingsScreen(
@@ -410,9 +413,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                   ),
                 );
-                if (result == true) {
-                  _loadUserData();
-                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: cardColor,
@@ -461,38 +461,98 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildPostsGrid(Color textColor, Color textSecondaryColor) {
-    // Sample posts data - replace with actual data from Firebase
-    final posts = List.generate(12, (index) => index);
-    
-    if (posts.isEmpty) {
-      return _buildEmptyState(
-        icon: Icons.grid_on,
-        title: 'No Posts Yet',
-        subtitle: 'Start sharing your sports moments!',
-        textColor: textColor,
-        textSecondaryColor: textSecondaryColor,
-      );
-    }
-
-    return GridView.builder(
-      padding: const EdgeInsets.all(2),
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 2,
-        mainAxisSpacing: 2,
-      ),
-      itemCount: posts.length,
-      itemBuilder: (context, index) {
-        return Container(
-          decoration: BoxDecoration(
-            color: AppTheme.cardColor,
-            image: DecorationImage(
-              image: AssetImage('assets/images/post.png'),
-              fit: BoxFit.cover,
+  Widget _buildPostsGrid(String userId, Color textColor, Color textSecondaryColor) {
+    return StreamBuilder<List<Post>>(
+      stream: _postsService.getUserPosts(userId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentColor),
             ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading posts',
+              style: GoogleFonts.poppins(
+                color: textSecondaryColor,
+                fontSize: 14,
+              ),
+            ),
+          );
+        }
+
+        final posts = snapshot.data ?? [];
+        
+        if (posts.isEmpty) {
+          return _buildEmptyState(
+            icon: Icons.grid_on,
+            title: 'No Posts Yet',
+            subtitle: 'Start sharing your sports moments!',
+            textColor: textColor,
+            textSecondaryColor: textSecondaryColor,
+          );
+        }
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(2),
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 2,
+            mainAxisSpacing: 2,
           ),
+          itemCount: posts.length,
+          itemBuilder: (context, index) {
+            final post = posts[index];
+            return GestureDetector(
+              onTap: () {
+                // TODO: Navigate to post detail
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.cardColor,
+                ),
+                child: post.mediaUrl.isNotEmpty
+                    ? Image.network(
+                        post.mediaUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: AppTheme.cardColor,
+                            child: Icon(
+                              Icons.broken_image,
+                              color: textSecondaryColor.withOpacity(0.5),
+                            ),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppTheme.accentColor),
+                            ),
+                          );
+                        },
+                      )
+                    : Center(
+                        child: Icon(
+                          Icons.image,
+                          color: textSecondaryColor.withOpacity(0.5),
+                          size: 40,
+                        ),
+                      ),
+              ),
+            );
+          },
         );
       },
     );
