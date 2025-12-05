@@ -20,7 +20,7 @@ class EditRoleScreen extends StatefulWidget {
 class _EditRoleScreenState extends State<EditRoleScreen> {
   late TextEditingController _roleController;
   String _selectedClub = '';
-  
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -36,7 +36,9 @@ class _EditRoleScreenState extends State<EditRoleScreen> {
   void initState() {
     super.initState();
     _roleController = TextEditingController(text: widget.currentRole);
-    _selectedClub = widget.currentClub.isEmpty ? clubs.keys.first : widget.currentClub;
+    _selectedClub = widget.currentClub.isEmpty
+        ? clubs.keys.first
+        : widget.currentClub;
   }
 
   @override
@@ -145,7 +147,7 @@ class _EditRoleScreenState extends State<EditRoleScreen> {
               autofocus: false,
             ),
             const SizedBox(height: 24),
-            
+
             // Club dropdown
             Text(
               'Club',
@@ -201,10 +203,7 @@ class _EditRoleScreenState extends State<EditRoleScreen> {
                           const SizedBox(width: 12),
                           Text(
                             entry.key,
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(color: textColor, fontSize: 16),
                           ),
                         ],
                       ),

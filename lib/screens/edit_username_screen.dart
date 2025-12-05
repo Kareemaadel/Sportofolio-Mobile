@@ -15,7 +15,7 @@ class EditUsernameScreen extends StatefulWidget {
 class _EditUsernameScreenState extends State<EditUsernameScreen> {
   late TextEditingController _usernameController;
   int _maxLength = 30;
-  
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 

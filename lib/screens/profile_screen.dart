@@ -1,7 +1,12 @@
 ﻿import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
+=======
+import '../theme/app_theme.dart';
+import '../services/data_service.dart';
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
 import '../services/theme_service.dart';
 import 'settings_screen.dart';
 
@@ -15,14 +20,18 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+<<<<<<< HEAD
   // Firebase instances
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // User data
+=======
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
   String _name = '';
   String _email = '';
   String _bio = '';
+<<<<<<< HEAD
   String _username = '';
   String _role = '';
   String _club = '';
@@ -31,6 +40,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _followersCount = 0;
   int _likesCount = 0;
 
+=======
+  String _club = '';
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
   bool _isLoading = true;
   int _selectedTab = 1; // 0: Videos, 1: Info, 2: Likes, 3: Trophy
 
@@ -41,6 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfileData() async {
+<<<<<<< HEAD
     try {
       // Get current user
       User? currentUser = _auth.currentUser;
@@ -112,6 +125,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+=======
+    await Future.delayed(const Duration(milliseconds: 300));
+    final name = await DataService.getName();
+    final bio = await DataService.getBio();
+    final club = await DataService.getClub();
+    setState(() {
+      _name = name;
+      _bio = bio;
+      _club = club;
+      _isLoading = false;
+    });
+  }
+
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -219,8 +246,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Icons.settings,
                                       color: Colors.white,
                                     ),
+<<<<<<< HEAD
                                     onPressed: () async {
                                       final result = await Navigator.push(
+=======
+                                    onPressed: () {
+                                      Navigator.push(
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => SettingsScreen(
@@ -228,10 +260,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           ),
                                         ),
                                       );
+<<<<<<< HEAD
                                       // Reload profile if settings were updated
                                       if (result == true) {
                                         _loadProfileData();
                                       }
+=======
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
                                     },
                                   ),
                                 ),
@@ -254,6 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: CircleAvatar(
                             radius: 70,
                             backgroundColor: cardColor,
+<<<<<<< HEAD
                             backgroundImage: _profileImageUrl.isNotEmpty
                                 ? NetworkImage(_profileImageUrl)
                                 : null,
@@ -264,6 +300,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: textColor.withOpacity(0.5),
                                   )
                                 : null,
+=======
+                            backgroundImage: const AssetImage(
+                              'assets/images/profile pic.png',
+                            ),
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
                           ),
                         ),
                       ),
@@ -276,6 +317,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                           ),
+<<<<<<< HEAD
                           child: (_role.isNotEmpty || _club.isNotEmpty)
                               ? Row(
                                   children: [
@@ -302,6 +344,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ],
                                 )
                               : SizedBox(),
+=======
+                          child: Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: Image.asset(
+                                  DataService.getClubLogo(_club),
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Icon(
+                                        Icons.shield,
+                                        color: Colors.white,
+                                        size: 24,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _club.isEmpty ? 'Al Ahly' : _club,
+                                    style: TextStyle(
+                                      color: textColor,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Goalkeeper',
+                                    style: TextStyle(
+                                      color: secondaryTextColor,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
                         ),
                       ),
                     ],
@@ -315,13 +409,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         const SizedBox(height: 70),
                         Text(
+<<<<<<< HEAD
                           _name.isNotEmpty ? _name : 'User',
+=======
+                          _name.isNotEmpty ? _name : 'Zeyad Waleed',
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
                           style: TextStyle(
                             color: textColor,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+<<<<<<< HEAD
                         if (_username.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
@@ -333,10 +432,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                           ),
+=======
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
                         const SizedBox(height: 8),
                         Text(
                           _bio.isNotEmpty
                               ? _bio
+<<<<<<< HEAD
                               : 'No bio yet. Add one in settings!',
                           style: TextStyle(
                             color: _bio.isNotEmpty
@@ -347,17 +449,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             fontStyle: _bio.isEmpty
                                 ? FontStyle.italic
                                 : FontStyle.normal,
+=======
+                              : 'Talented goalkeeper currently playing for Al Ahly, one of Egypt\'s most prestigious football clubs. Born and raised in Cairo',
+                          style: TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 12,
+                            height: 1.5,
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
                           ),
                         ),
                         const SizedBox(height: 32),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
+<<<<<<< HEAD
                             _buildStatColumn('$_followingCount', 'Following'),
                             Container(width: 1, height: 40, color: borderColor),
                             _buildStatColumn('$_followersCount', 'Followers'),
                             Container(width: 1, height: 40, color: borderColor),
                             _buildStatColumn('$_likesCount', 'Likes'),
+=======
+                            _buildStatColumn('351', 'Following'),
+                            Container(width: 1, height: 40, color: borderColor),
+                            _buildStatColumn('1,457', 'Followers'),
+                            Container(width: 1, height: 40, color: borderColor),
+                            _buildStatColumn('64.7K', 'Likes'),
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
                           ],
                         ),
                         const SizedBox(height: 24),
@@ -434,6 +551,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Text(
           'Videos section coming soon',
           style: TextStyle(color: textColor, fontSize: 16),
+<<<<<<< HEAD
         ),
       ),
     );
@@ -510,6 +628,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
+=======
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLikesSection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Text(
+          'Likes section coming soon',
+          style: TextStyle(color: textColor, fontSize: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrophySection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Text(
+          'Trophy section coming soon',
+          style: TextStyle(color: textColor, fontSize: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoSection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textColor : AppTheme.textColorLight;
+    final secondaryTextColor = isDark
+        ? const Color(0xFF8A8B8F)
+        : AppTheme.textSecondaryColorLight;
+    final cardColor = isDark ? AppTheme.cardColor : AppTheme.cardColorLight;
+    final borderColor = isDark
+        ? AppTheme.borderColor
+        : AppTheme.borderColorLight;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Career history section
+        _buildCareerItem(
+          DataService.getClubLogo(_club),
+          _club.isEmpty ? 'Al Ahly' : _club,
+          'Goalkeeper',
+          '2022-Now',
+        ),
+        const SizedBox(height: 4),
+        _buildCareerDashedLine(),
+        const SizedBox(height: 4),
+        _buildCareerItem(
+          'assets/images/Zamalek.png',
+          'Zamalek',
+          'Goalkeeper',
+          '2018-2022',
+        ),
+        const SizedBox(height: 4),
+        _buildCareerDashedLine(),
+        const SizedBox(height: 4),
+        _buildCareerItem(
+          'assets/images/Zamalek.png',
+          'Zamalek',
+          'Football player',
+          '2015-2018',
+        ),
+>>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
         const SizedBox(height: 32),
         // Player stats section
         _buildPlayerStat(

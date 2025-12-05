@@ -16,6 +16,9 @@ class SettingsScreen extends StatefulWidget {
   final ThemeService? themeService;
 
   const SettingsScreen({super.key, this.themeService});
+  final ThemeService? themeService;
+
+  const SettingsScreen({super.key, this.themeService});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -125,6 +128,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _bioController = TextEditingController();
     _roleController = TextEditingController();
     _loadSettings();
+
+    // Listen to theme changes
+    widget.themeService?.addListener(_onThemeChanged);
+  }
+
+  void _onThemeChanged() {
+    setState(() {});
   }
 
   Future<void> _loadSettings() async {
@@ -232,6 +242,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void dispose() {
+    widget.themeService?.removeListener(_onThemeChanged);
     _nameController.dispose();
     _usernameController.dispose();
     _bioController.dispose();

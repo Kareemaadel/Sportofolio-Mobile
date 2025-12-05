@@ -29,11 +29,7 @@ void main() async {
     await FirebaseConfig.initialize();
     _logger.info('Firebase initialized successfully');
   } catch (e) {
-    _logger.severe('Failed to initialize Firebase: $e');
     _logger.warning('Server will continue but Firebase features may not work');
-  }
-
-  // Create router
   final router = Router();
 
   // Add API routes

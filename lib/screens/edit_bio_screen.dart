@@ -15,7 +15,7 @@ class EditBioScreen extends StatefulWidget {
 class _EditBioScreenState extends State<EditBioScreen> {
   late TextEditingController _bioController;
   int _maxLength = 80;
-  
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -126,19 +126,13 @@ class _EditBioScreenState extends State<EditBioScreen> {
             const SizedBox(height: 8),
             Text(
               'Write a short description about yourself',
-              style: TextStyle(
-                color: secondaryTextColor,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: secondaryTextColor, fontSize: 14),
             ),
             const SizedBox(height: 24),
             TextField(
               controller: _bioController,
               autofocus: true,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: textColor, fontSize: 16),
               maxLength: _maxLength,
               maxLines: 6,
               decoration: InputDecoration(
