@@ -1,28 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-<<<<<<< HEAD
 import 'package:firebase_core/firebase_core.dart';
-=======
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/add_post_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
-<<<<<<< HEAD
 import 'screens/login_screen.dart';
-=======
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
 import 'services/theme_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase
   await Firebase.initializeApp();
-  
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -64,13 +58,9 @@ class _SportofolioAppState extends State<SportofolioApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeService.themeMode,
-<<<<<<< HEAD
       // Start with LoginScreen for authentication
       // Change to MainNavigationScreen(themeService: _themeService) to skip login
       home: const LoginScreen(),
-=======
-      home: MainNavigationScreen(themeService: _themeService),
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
     );
   }
 }
@@ -97,11 +87,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     _screens = [
       const HomeScreen(),
       const SearchScreen(),
-      AddPostScreen(onClose: () {
-        setState(() {
-          _currentIndex = 0; // Navigate to home tab
-        });
-      }),
+      AddPostScreen(
+        onClose: () {
+          setState(() {
+            _currentIndex = 0; // Navigate to home tab
+          });
+        },
+      ),
       const Placeholder(), // Apply screen
       ProfileScreen(themeService: widget.themeService),
     ];

@@ -1,12 +1,7 @@
 ﻿import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
-=======
-import '../theme/app_theme.dart';
-import '../services/data_service.dart';
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
 import '../services/theme_service.dart';
 import 'settings_screen.dart';
 
@@ -20,18 +15,14 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-<<<<<<< HEAD
   // Firebase instances
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // User data
-=======
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
   String _name = '';
   String _email = '';
   String _bio = '';
-<<<<<<< HEAD
   String _username = '';
   String _role = '';
   String _club = '';
@@ -40,9 +31,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _followersCount = 0;
   int _likesCount = 0;
 
-=======
-  String _club = '';
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
   bool _isLoading = true;
   int _selectedTab = 1; // 0: Videos, 1: Info, 2: Likes, 3: Trophy
 
@@ -53,7 +41,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfileData() async {
-<<<<<<< HEAD
     try {
       // Get current user
       User? currentUser = _auth.currentUser;
@@ -125,20 +112,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-=======
-    await Future.delayed(const Duration(milliseconds: 300));
-    final name = await DataService.getName();
-    final bio = await DataService.getBio();
-    final club = await DataService.getClub();
-    setState(() {
-      _name = name;
-      _bio = bio;
-      _club = club;
-      _isLoading = false;
-    });
-  }
-
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -246,13 +219,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Icons.settings,
                                       color: Colors.white,
                                     ),
-<<<<<<< HEAD
                                     onPressed: () async {
                                       final result = await Navigator.push(
-=======
-                                    onPressed: () {
-                                      Navigator.push(
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => SettingsScreen(
@@ -260,13 +228,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           ),
                                         ),
                                       );
-<<<<<<< HEAD
                                       // Reload profile if settings were updated
                                       if (result == true) {
                                         _loadProfileData();
                                       }
-=======
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
                                     },
                                   ),
                                 ),
@@ -292,7 +257,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 <<<<<<< HEAD
                             backgroundImage: _profileImageUrl.isNotEmpty
                                 ? NetworkImage(_profileImageUrl)
-                                : null,
                             child: _profileImageUrl.isEmpty
                                 ? Icon(
                                     Icons.person,
@@ -303,11 +267,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 =======
                             backgroundImage: const AssetImage(
                               'assets/images/profile pic.png',
-                            ),
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
-                          ),
-                        ),
-                      ),
                       Positioned(
                         right: 20,
                         bottom: -75,
@@ -326,7 +285,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(
                                           _role.isNotEmpty && _club.isNotEmpty
                                               ? '$_role • $_club'
                                               : _role.isNotEmpty
@@ -353,58 +311,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   DataService.getClubLogo(_club),
                                   width: 40,
                                   height: 40,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: const Icon(
-                                        Icons.shield,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    _club.isEmpty ? 'Al Ahly' : _club,
-                                    style: TextStyle(
-                                      color: textColor,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Goalkeeper',
-                                    style: TextStyle(
-                                      color: secondaryTextColor,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 70),

@@ -2,7 +2,6 @@ import 'package:firedart/firedart.dart';
 import '../config/database.dart';
 import '../models/user.dart';
 
-<<<<<<< HEAD
 void main() async {
   // Initialize Firebase before using Firestore
   await FirebaseConfig.initialize();
@@ -32,8 +31,6 @@ void main() async {
   }
 }
 
-=======
->>>>>>> 51b834a1102217e446e03ec9fe85e11b5f647a25
 class UserService {
   static final _usersCollection = 'users';
 
