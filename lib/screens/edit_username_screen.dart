@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
-import '../services/data_service.dart';
 
 class EditUsernameScreen extends StatefulWidget {
   final String currentUsername;
@@ -14,6 +15,9 @@ class EditUsernameScreen extends StatefulWidget {
 class _EditUsernameScreenState extends State<EditUsernameScreen> {
   late TextEditingController _usernameController;
   int _maxLength = 30;
+  
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
@@ -29,9 +33,26 @@ class _EditUsernameScreenState extends State<EditUsernameScreen> {
 
   Future<void> _saveUsername() async {
     if (_usernameController.text.trim().isNotEmpty) {
-      await DataService.setEmail(_usernameController.text.trim());
-      if (mounted) {
-        Navigator.pop(context, true);
+      try {
+        User? currentUser = _auth.currentUser;
+        if (currentUser != null) {
+          await _firestore.collection('users').doc(currentUser.uid).update({
+            'username': _usernameController.text.trim(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          if (mounted) {
+            Navigator.pop(context, true);
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error saving username: ${e.toString()}'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
       }
     }
   }

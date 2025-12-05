@@ -2,14 +2,44 @@ import 'package:firedart/firedart.dart';
 import '../config/database.dart';
 import '../models/user.dart';
 
+void main() async {
+  // Initialize Firebase before using Firestore
+  await FirebaseConfig.initialize();
+
+  // Create a test user
+  try {
+    var newUser = await UserService.createUser({
+      'name': 'Test User',
+      'email': 'testuser@example.com',
+      'passwordHash': 'hashedpassword123',
+    });
+    print('Created user:');
+    print(newUser);
+  } catch (e) {
+    print('Error creating user: $e');
+  }
+
+  // List all users
+  try {
+    var users = await UserService.getAllUsers();
+    print('User count: ${users.length}');
+    for (var user in users) {
+      print(user);
+    }
+  } catch (e) {
+    print('Error: $e');
+  }
+}
+
 class UserService {
   static final _usersCollection = 'users';
 
   /// Get all users from Firestore
   static Future<List<User>> getAllUsers() async {
     try {
-      final snapshot = await FirebaseConfig.db.collection(_usersCollection).get();
-      
+      final snapshot =
+          await FirebaseConfig.db.collection(_usersCollection).get();
+
       return snapshot.map((doc) {
         return User.fromJson(doc.map);
       }).toList();
@@ -26,7 +56,7 @@ class UserService {
           .document(userId)
           .get();
 
-      if (!doc.exists) {
+      if (doc.map.isEmpty) {
         return null;
       }
 
@@ -58,7 +88,7 @@ class UserService {
   static Future<User> createUser(Map<String, dynamic> userData) async {
     try {
       final userId = userData['id'] as String? ?? _generateUserId();
-      
+
       final newUser = {
         'id': userId,
         'name': userData['name'] as String,
@@ -80,7 +110,8 @@ class UserService {
   }
 
   /// Update user
-  static Future<User> updateUser(String userId, Map<String, dynamic> updates) async {
+  static Future<User> updateUser(
+      String userId, Map<String, dynamic> updates) async {
     try {
       // Get existing user
       final existingDoc = await FirebaseConfig.db
@@ -88,7 +119,7 @@ class UserService {
           .document(userId)
           .get();
 
-      if (!existingDoc.exists) {
+      if (existingDoc.map.isEmpty) {
         throw Exception('User not found');
       }
 
@@ -128,7 +159,8 @@ class UserService {
   }
 
   /// Update user password hash
-  static Future<void> updatePassword(String userId, String newPasswordHash) async {
+  static Future<void> updatePassword(
+      String userId, String newPasswordHash) async {
     try {
       await FirebaseConfig.db
           .collection(_usersCollection)
@@ -145,9 +177,8 @@ class UserService {
   /// Search users by name
   static Future<List<User>> searchUsersByName(String searchTerm) async {
     try {
-      final snapshot = await FirebaseConfig.db
-          .collection(_usersCollection)
-          .get();
+      final snapshot =
+          await FirebaseConfig.db.collection(_usersCollection).get();
 
       return snapshot
           .where((doc) {

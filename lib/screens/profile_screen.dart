@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
-import '../services/data_service.dart';
 import '../services/theme_service.dart';
 import 'settings_screen.dart';
 
@@ -14,9 +15,22 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  // Firebase instances
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // User data
   String _name = '';
+  String _email = '';
   String _bio = '';
+  String _username = '';
+  String _role = '';
   String _club = '';
+  String _profileImageUrl = '';
+  int _followingCount = 0;
+  int _followersCount = 0;
+  int _likesCount = 0;
+
   bool _isLoading = true;
   int _selectedTab = 1; // 0: Videos, 1: Info, 2: Likes, 3: Trophy
 
@@ -27,16 +41,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfileData() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    final name = await DataService.getName();
-    final bio = await DataService.getBio();
-    final club = await DataService.getClub();
-    setState(() {
-      _name = name;
-      _bio = bio;
-      _club = club;
-      _isLoading = false;
-    });
+    try {
+      // Get current user
+      User? currentUser = _auth.currentUser;
+
+      if (currentUser != null) {
+        // Fetch user data from Firestore
+        DocumentSnapshot userDoc = await _firestore
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        if (userDoc.exists) {
+          Map<String, dynamic> userData =
+              userDoc.data() as Map<String, dynamic>;
+
+          setState(() {
+            _name = userData['name'] ?? '';
+            _email = userData['email'] ?? '';
+            _bio = userData['bio'] ?? '';
+            _username = userData['username'] ?? '';
+            _role = userData['role'] ?? '';
+            _club = userData['club'] ?? '';
+            _profileImageUrl = userData['profileImageUrl'] ?? '';
+            _isLoading = false;
+          });
+
+          // Fetch social counts (followers/following)
+          await _loadSocialCounts(currentUser.uid);
+        } else {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading profile data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadSocialCounts(String userId) async {
+    try {
+      // Count followers
+      QuerySnapshot followersSnapshot = await _firestore
+          .collection('followers')
+          .doc(userId)
+          .collection('userFollowers')
+          .get();
+
+      // Count following
+      QuerySnapshot followingSnapshot = await _firestore
+          .collection('following')
+          .doc(userId)
+          .collection('userFollowing')
+          .get();
+
+      setState(() {
+        _followersCount = followersSnapshot.docs.length;
+        _followingCount = followingSnapshot.docs.length;
+      });
+    } catch (e) {
+      print('Error loading social counts: $e');
+    }
   }
 
   @override
@@ -146,8 +219,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Icons.settings,
                                       color: Colors.white,
                                     ),
-                                    onPressed: () {
-                                      Navigator.push(
+                                    onPressed: () async {
+                                      final result = await Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => SettingsScreen(
@@ -155,6 +228,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           ),
                                         ),
                                       );
+                                      // Reload profile if settings were updated
+                                      if (result == true) {
+                                        _loadProfileData();
+                                      }
                                     },
                                   ),
                                 ),
@@ -177,9 +254,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: CircleAvatar(
                             radius: 70,
                             backgroundColor: cardColor,
-                            backgroundImage: const AssetImage(
-                              'assets/images/profile pic.png',
-                            ),
+                            backgroundImage: _profileImageUrl.isNotEmpty
+                                ? NetworkImage(_profileImageUrl)
+                                : null,
+                            child: _profileImageUrl.isEmpty
+                                ? Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: textColor.withOpacity(0.5),
+                                  )
+                                : null,
                           ),
                         ),
                       ),
@@ -192,56 +276,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: Image.asset(
-                                  DataService.getClubLogo(_club),
-                                  width: 40,
-                                  height: 40,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: const Icon(
-                                        Icons.shield,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    _club.isEmpty ? 'Al Ahly' : _club,
-                                    style: TextStyle(
-                                      color: textColor,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
+                          child: (_role.isNotEmpty || _club.isNotEmpty)
+                              ? Row(
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _role.isNotEmpty && _club.isNotEmpty
+                                              ? '$_role • $_club'
+                                              : _role.isNotEmpty
+                                              ? _role
+                                              : _club,
+                                          style: TextStyle(
+                                            color: textColor,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        // Username removed from under club/role
+                                      ],
                                     ),
-                                  ),
-                                  Text(
-                                    'Goalkeeper',
-                                    style: TextStyle(
-                                      color: secondaryTextColor,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                                  ],
+                                )
+                              : SizedBox(),
                         ),
                       ),
                     ],
@@ -255,33 +315,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         const SizedBox(height: 70),
                         Text(
-                          _name.isNotEmpty ? _name : 'Zeyad Waleed',
+                          _name.isNotEmpty ? _name : 'User',
                           style: TextStyle(
                             color: textColor,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        if (_username.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              '@${_username}',
+                              style: TextStyle(
+                                color: secondaryTextColor,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
                         const SizedBox(height: 8),
                         Text(
                           _bio.isNotEmpty
                               ? _bio
-                              : 'Talented goalkeeper currently playing for Al Ahly, one of Egypt\'s most prestigious football clubs. Born and raised in Cairo',
+                              : 'No bio yet. Add one in settings!',
                           style: TextStyle(
-                            color: secondaryTextColor,
+                            color: _bio.isNotEmpty
+                                ? secondaryTextColor
+                                : secondaryTextColor.withOpacity(0.6),
                             fontSize: 12,
                             height: 1.5,
+                            fontStyle: _bio.isEmpty
+                                ? FontStyle.italic
+                                : FontStyle.normal,
                           ),
                         ),
                         const SizedBox(height: 32),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildStatColumn('351', 'Following'),
+                            _buildStatColumn('$_followingCount', 'Following'),
                             Container(width: 1, height: 40, color: borderColor),
-                            _buildStatColumn('1,457', 'Followers'),
+                            _buildStatColumn('$_followersCount', 'Followers'),
                             Container(width: 1, height: 40, color: borderColor),
-                            _buildStatColumn('64.7K', 'Likes'),
+                            _buildStatColumn('$_likesCount', 'Likes'),
                           ],
                         ),
                         const SizedBox(height: 24),
@@ -410,31 +486,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Career history section
-        _buildCareerItem(
-          DataService.getClubLogo(_club),
-          _club.isEmpty ? 'Al Ahly' : _club,
-          'Goalkeeper',
-          '2022-Now',
-        ),
-        const SizedBox(height: 4),
-        _buildCareerDashedLine(),
-        const SizedBox(height: 4),
-        _buildCareerItem(
-          'assets/images/Zamalek.png',
-          'Zamalek',
-          'Goalkeeper',
-          '2018-2022',
-        ),
-        const SizedBox(height: 4),
-        _buildCareerDashedLine(),
-        const SizedBox(height: 4),
-        _buildCareerItem(
-          'assets/images/Zamalek.png',
-          'Zamalek',
-          'Football player',
-          '2015-2018',
-        ),
+        // Career history section - placeholder for now
+        // TODO: Fetch career history from user profile
+        if (_role.isNotEmpty)
+          _buildCareerItem(
+            'assets/images/Al Ahly.png',
+            _role,
+            'Current Position',
+            'Now',
+          ),
+        if (_role.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(40),
+              child: Text(
+                'No career information yet.\nAdd your role in settings!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: secondaryTextColor.withOpacity(0.6),
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ),
         const SizedBox(height: 32),
         // Player stats section
         _buildPlayerStat(

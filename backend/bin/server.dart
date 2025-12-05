@@ -6,10 +6,10 @@ import 'package:shelf_router/shelf_router.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:logging/logging.dart';
 
-import 'src/routes/api_routes.dart';
-import 'src/middleware/error_middleware.dart';
-import 'src/middleware/logger_middleware.dart';
-import 'src/config/database.dart';
+import '../lib/src/routes/api_routes.dart';
+import '../lib/src/middleware/error_middleware.dart';
+import '../lib/src/middleware/logger_middleware.dart';
+import '../lib/src/config/database.dart';
 
 final _logger = Logger('Server');
 
@@ -26,7 +26,7 @@ void main() async {
 
   // Initialize database
   try {
-    await DatabaseConfig.initialize();
+    await FirebaseConfig.initialize();
     _logger.info('Firebase initialized successfully');
   } catch (e) {
     _logger.severe('Failed to initialize Firebase: $e');

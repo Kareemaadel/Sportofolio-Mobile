@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
-import '../services/data_service.dart';
 
 class EditBioScreen extends StatefulWidget {
   final String currentBio;
@@ -14,6 +15,9 @@ class EditBioScreen extends StatefulWidget {
 class _EditBioScreenState extends State<EditBioScreen> {
   late TextEditingController _bioController;
   int _maxLength = 80;
+  
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
@@ -28,9 +32,26 @@ class _EditBioScreenState extends State<EditBioScreen> {
   }
 
   Future<void> _saveBio() async {
-    await DataService.setBio(_bioController.text.trim());
-    if (mounted) {
-      Navigator.pop(context, true);
+    try {
+      User? currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        await _firestore.collection('users').doc(currentUser.uid).update({
+          'bio': _bioController.text.trim(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving bio: ${e.toString()}'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
     }
   }
 
