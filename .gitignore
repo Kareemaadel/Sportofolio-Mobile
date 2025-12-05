@@ -44,6 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Ignore Google Cloud service config files
+google-services.json
+GoogleService-Info.plist
+
 # Additional ignores for Flutter/Dart/VSCode
 .metadata
 pubspec.lock
