@@ -8,6 +8,7 @@ import '../services/theme_service.dart';
 import '../services/posts_service.dart';
 import '../models/post.dart';
 import 'settings_screen.dart';
+import 'post_detail_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final dynamic themeService;
@@ -72,10 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         body: Center(
           child: Text(
             'Please log in to view profile',
-            style: GoogleFonts.poppins(
-              color: textColor,
-              fontSize: 16,
-            ),
+            style: GoogleFonts.poppins(color: textColor, fontSize: 16),
           ),
         ),
       );
@@ -101,10 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             body: Center(
               child: Text(
                 'Error loading profile',
-                style: GoogleFonts.poppins(
-                  color: textColor,
-                  fontSize: 16,
-                ),
+                style: GoogleFonts.poppins(color: textColor, fontSize: 16),
               ),
             ),
           );
@@ -117,6 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         final String role = userData?['role'] ?? '';
         final String club = userData?['club'] ?? '';
         final String profileImageUrl = userData?['profileImageUrl'] ?? '';
+        final bool isVerified = userData?['isVerified'] ?? false;
 
         return Scaffold(
           backgroundColor: backgroundColor,
@@ -156,7 +152,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                           context,
                           MaterialPageRoute(
                             builder: (context) => SettingsScreen(
-                              themeService: widget.themeService as ThemeService?,
+                              themeService:
+                                  widget.themeService as ThemeService?,
                             ),
                           ),
                         );
@@ -170,22 +167,39 @@ class _ProfileScreenState extends State<ProfileScreen>
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
-                      
+
                       // Profile Picture
-                      _buildProfilePicture(profileImageUrl, cardColor, textColor),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Username (main title)
-                      Text(
-                        username.isNotEmpty ? '@$username' : name,
-                        style: GoogleFonts.poppins(
-                          color: textColor,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      _buildProfilePicture(
+                        profileImageUrl,
+                        cardColor,
+                        textColor,
                       ),
-                      
+
+                      const SizedBox(height: 16),
+
+                      // Username (main title) with verification badge
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            username.isNotEmpty ? '@$username' : name,
+                            style: GoogleFonts.poppins(
+                              color: textColor,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (isVerified) ...[
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.verified,
+                              color: Colors.blue,
+                              size: 24,
+                            ),
+                          ],
+                        ],
+                      ),
+
                       // Role and Club
                       if (role.isNotEmpty) ...[
                         const SizedBox(height: 8),
@@ -211,7 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
                         ),
                       ],
-                      
+
                       // Bio
                       if (bio.isNotEmpty) ...[
                         const SizedBox(height: 16),
@@ -228,19 +242,18 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
                         ),
                       ],
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // Stats Row
-                      _buildStatsRow(userData?['uid'] ?? _auth.currentUser?.uid ?? '', textColor, textSecondaryColor),
-                      
+                      _buildStatsRow(
+                        userData?['uid'] ?? _auth.currentUser?.uid ?? '',
+                        textColor,
+                        textSecondaryColor,
+                      ),
+
                       const SizedBox(height: 24),
-                      
-                      // Edit Profile Button
-                      _buildEditProfileButton(textColor, cardColor),
-                      
-                      const SizedBox(height: 24),
-                      
+
                       // Divider
                       Divider(
                         color: isDark
@@ -306,7 +319,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildPostsGrid(userData?['uid'] ?? _auth.currentUser?.uid ?? '', textColor, textSecondaryColor),
+                      _buildPostsGrid(
+                        userData?['uid'] ?? _auth.currentUser?.uid ?? '',
+                        textColor,
+                        textSecondaryColor,
+                      ),
                       _buildSavedGrid(textSecondaryColor),
                       _buildVideosGrid(textSecondaryColor),
                     ],
@@ -321,7 +338,10 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildProfilePicture(
-      String profileImageUrl, Color cardColor, Color textColor) {
+    String profileImageUrl,
+    Color cardColor,
+    Color textColor,
+  ) {
     return CircleAvatar(
       radius: 50,
       backgroundColor: cardColor,
@@ -329,16 +349,16 @@ class _ProfileScreenState extends State<ProfileScreen>
           ? NetworkImage(profileImageUrl)
           : null,
       child: profileImageUrl.isEmpty
-          ? Icon(
-              Icons.person,
-              size: 50,
-              color: textColor.withOpacity(0.5),
-            )
+          ? Icon(Icons.person, size: 50, color: textColor.withOpacity(0.5))
           : null,
     );
   }
 
-  Widget _buildStatsRow(String userId, Color textColor, Color textSecondaryColor) {
+  Widget _buildStatsRow(
+    String userId,
+    Color textColor,
+    Color textSecondaryColor,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Row(
@@ -349,10 +369,10 @@ class _ProfileScreenState extends State<ProfileScreen>
             builder: (context, snapshot) {
               final count = snapshot.data ?? 0;
               return _buildStatItem(
-                count.toString(), 
-                'Posts', 
-                textColor, 
-                textSecondaryColor
+                count.toString(),
+                'Posts',
+                textColor,
+                textSecondaryColor,
               );
             },
           ),
@@ -361,20 +381,64 @@ class _ProfileScreenState extends State<ProfileScreen>
             height: 40,
             color: textSecondaryColor.withOpacity(0.2),
           ),
-          _buildStatItem('1.2K', 'Followers', textColor, textSecondaryColor),
+          StreamBuilder<DocumentSnapshot>(
+            stream: _getUserDataStream(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return _buildStatItem(
+                  '0',
+                  'Followers',
+                  textColor,
+                  textSecondaryColor,
+                );
+              }
+              final userData = snapshot.data?.data() as Map<String, dynamic>?;
+              final followers = userData?['followers'] ?? 0;
+              return _buildStatItem(
+                followers.toString(),
+                'Followers',
+                textColor,
+                textSecondaryColor,
+              );
+            },
+          ),
           Container(
             width: 1,
             height: 40,
             color: textSecondaryColor.withOpacity(0.2),
           ),
-          _buildStatItem('283', 'Following', textColor, textSecondaryColor),
+          StreamBuilder<DocumentSnapshot>(
+            stream: _getUserDataStream(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return _buildStatItem(
+                  '0',
+                  'Following',
+                  textColor,
+                  textSecondaryColor,
+                );
+              }
+              final userData = snapshot.data?.data() as Map<String, dynamic>?;
+              final following = userData?['following'] ?? 0;
+              return _buildStatItem(
+                following.toString(),
+                'Following',
+                textColor,
+                textSecondaryColor,
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
   Widget _buildStatItem(
-      String count, String label, Color textColor, Color textSecondaryColor) {
+    String count,
+    String label,
+    Color textColor,
+    Color textSecondaryColor,
+  ) {
     return Column(
       children: [
         Text(
@@ -388,80 +452,17 @@ class _ProfileScreenState extends State<ProfileScreen>
         const SizedBox(height: 4),
         Text(
           label,
-          style: GoogleFonts.poppins(
-            color: textSecondaryColor,
-            fontSize: 12,
-          ),
+          style: GoogleFonts.poppins(color: textSecondaryColor, fontSize: 12),
         ),
       ],
     );
   }
 
-  Widget _buildEditProfileButton(Color textColor, Color cardColor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SettingsScreen(
-                      themeService: widget.themeService as ThemeService?,
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: cardColor,
-                foregroundColor: textColor,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(
-                    color: textColor.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Text(
-                'Edit Profile',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          ElevatedButton(
-            onPressed: () {
-              // Share profile functionality
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: cardColor,
-              foregroundColor: textColor,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(
-                  color: textColor.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Icon(Icons.share_outlined, size: 20),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPostsGrid(String userId, Color textColor, Color textSecondaryColor) {
+  Widget _buildPostsGrid(
+    String userId,
+    Color textColor,
+    Color textSecondaryColor,
+  ) {
     return StreamBuilder<List<Post>>(
       stream: _postsService.getUserPosts(userId),
       builder: (context, snapshot) {
@@ -486,7 +487,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         }
 
         final posts = snapshot.data ?? [];
-        
+
         if (posts.isEmpty) {
           return _buildEmptyState(
             icon: Icons.grid_on,
@@ -510,12 +511,18 @@ class _ProfileScreenState extends State<ProfileScreen>
             final post = posts[index];
             return GestureDetector(
               onTap: () {
-                // TODO: Navigate to post detail
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PostDetailScreen(
+                      initialPostId: post.postId,
+                      userId: userId,
+                    ),
+                  ),
+                );
               },
               child: Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.cardColor,
-                ),
+                decoration: BoxDecoration(color: AppTheme.cardColor),
                 child: post.mediaUrl.isNotEmpty
                     ? Image.network(
                         post.mediaUrl,
@@ -535,10 +542,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                             child: CircularProgressIndicator(
                               value: loadingProgress.expectedTotalBytes != null
                                   ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
+                                        loadingProgress.expectedTotalBytes!
                                   : null,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppTheme.accentColor),
+                                AppTheme.accentColor,
+                              ),
                             ),
                           );
                         },
@@ -589,11 +597,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 64,
-            color: textSecondaryColor.withOpacity(0.5),
-          ),
+          Icon(icon, size: 64, color: textSecondaryColor.withOpacity(0.5)),
           const SizedBox(height: 16),
           Text(
             title,
@@ -606,10 +610,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 8),
           Text(
             subtitle,
-            style: GoogleFonts.poppins(
-              color: textSecondaryColor,
-              fontSize: 14,
-            ),
+            style: GoogleFonts.poppins(color: textSecondaryColor, fontSize: 14),
           ),
         ],
       ),
@@ -631,11 +632,11 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: backgroundColor,
-      child: tabBar,
-    );
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: backgroundColor, child: tabBar);
   }
 
   @override

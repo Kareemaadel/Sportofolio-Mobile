@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/search_screen.dart';
@@ -10,6 +11,8 @@ import 'screens/add_post_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/trials_screen.dart';
 import 'services/theme_service.dart';
 
 void main() async {
@@ -62,9 +65,7 @@ class _SportofolioAppState extends State<SportofolioApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeService.themeMode,
-      // Start with LoginScreen for authentication
-      // Change to MainNavigationScreen(themeService: _themeService) to skip login
-      home: const LoginScreen(),
+      home: const OnboardingScreen(),
     );
   }
 }
@@ -98,7 +99,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
           });
         },
       ),
-      const Placeholder(), // Apply screen
+      const TrialsScreen(),
       ProfileScreen(themeService: widget.themeService),
     ];
     _controller = AnimationController(

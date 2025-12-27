@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import '../theme/app_theme.dart';
 import '../widgets/post_widget.dart';
+import '../models/post.dart';
+import '../services/posts_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -69,12 +73,10 @@ class _HomeScreenState extends State<HomeScreen> {
             Positioned.fill(
               child: CustomScrollView(
                 controller: _scrollController,
-                physics: const BouncingScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 slivers: [
-                  // Top spacing for nav bar
-                  SliverToBoxAdapter(
-                    child: SizedBox(height: _isNavBarVisible ? 68 : 0),
-                  ),
+                  // Top spacing for nav bar (fixed height)
+                  const SliverToBoxAdapter(child: SizedBox(height: 68)),
                   // Posts Feed
                   _buildPostsSliverList(),
                 ],
@@ -157,83 +159,131 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPostsSliverList() {
-    return SliverList(
-      delegate: SliverChildBuilderDelegate((context, index) {
-        final posts = _getPosts();
-        if (index < posts.length) {
-          return TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: Duration(milliseconds: 300 + (index * 100)),
-            curve: Curves.easeOut,
-            builder: (context, value, child) {
-              return Opacity(
-                opacity: value,
-                child: Transform.translate(
-                  offset: Offset(0, 20 * (1 - value)),
-                  child: child,
+    return StreamBuilder<List<Post>>(
+      stream: PostsService().getAllPosts(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppTheme.accentColor,
+                  ),
                 ),
-              );
-            },
-            child: PostWidget(
-              profileImage: posts[index]['profileImage']!,
-              userName: posts[index]['userName']!,
-              userDescription: posts[index]['userDescription'] as String?,
-              timeAgo: posts[index]['timeAgo']!,
-              content: posts[index]['content']!,
-              postImage: posts[index]['postImage'],
-              postImages: posts[index]['postImages'] as List<String>?,
-              likes: posts[index]['likes'] as int,
-              comments: posts[index]['comments'] as int,
-              reposts: (posts[index]['reposts'] as int?) ?? 0,
-              shares: (posts[index]['shares'] as int?) ?? 0,
+              ),
             ),
           );
         }
-        return null;
-      }, childCount: _getPosts().length),
-    );
-  }
 
-  List<Map<String, dynamic>> _getPosts() {
-    return [
-      {
-        'profileImage': 'assets/images/account.png',
-        'userName': 'Zeyad Waleed',
-        'userDescription': 'Basketball Player @Ahly',
-        'timeAgo': '7h',
-        'content':
-            'When Josko met Thomas 😍\n\nA wholesome moment that this City fan will never, ever forget! 💙\n\nTogether, we can use our #PowerForGood to end bullying, for good 🛡️ #AntiBullyingWeek',
-        'postImages': ['assets/images/post.png', 'assets/images/post.png'],
-        'likes': 727,
-        'comments': 2,
-        'reposts': 8,
-        'shares': 1,
+        if (snapshot.hasError) {
+          return SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Text(
+                  'Error loading posts: ${snapshot.error}',
+                  style: GoogleFonts.poppins(color: Colors.red, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          );
+        }
+
+        final posts = snapshot.data ?? [];
+
+        if (posts.isEmpty) {
+          return SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.article_outlined,
+                      size: 64,
+                      color: AppTheme.textSecondaryColor.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No posts yet',
+                      style: GoogleFonts.poppins(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Be the first to share something!',
+                      style: GoogleFonts.poppins(
+                        color: AppTheme.textSecondaryColor.withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        return SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final post = posts[index];
+
+            // Skip posts with empty userId to avoid Firestore error
+            if (post.userId.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(post.userId)
+                  .get(),
+              builder: (context, userSnapshot) {
+                // Default values while loading
+                String userName = 'User';
+                String userDescription = '';
+                String? profileImage;
+                bool isVerified = false;
+
+                if (userSnapshot.hasData && userSnapshot.data!.exists) {
+                  final userData =
+                      userSnapshot.data!.data() as Map<String, dynamic>?;
+                  userName = userData?['name'] ?? 'User';
+                  userDescription = userData?['role'] ?? '';
+                  profileImage = userData?['profileImageUrl']?.toString();
+                  isVerified = userData?['isVerified'] ?? false;
+                }
+
+                return PostWidget(
+                  postId: post.postId,
+                  postUserId: post.userId,
+                  profileImage: profileImage,
+                  userName: userName,
+                  userDescription: userDescription.isNotEmpty
+                      ? userDescription
+                      : null,
+                  timeAgo: timeago.format(post.createdAt),
+                  content: post.caption,
+                  postImage: post.mediaUrl.isNotEmpty ? post.mediaUrl : null,
+                  postImages: null,
+                  likes: post.likesCount,
+                  comments: post.commentsCount,
+                  reposts: 0,
+                  shares: 0,
+                  isVerified: isVerified,
+                );
+              },
+            );
+          }, childCount: posts.length),
+        );
       },
-      {
-        'profileImage': 'assets/images/Madrid.png',
-        'userName': 'Real Madrid',
-        'userDescription': 'Official Account',
-        'timeAgo': '1d',
-        'content':
-            '🇪🇸 7-0 🇦🇷\n💪 @gonzalogarcia7_\n🏅 2027 #U21EURO Qualifiers',
-        'postImage': 'assets/images/post.png',
-        'likes': 1240,
-        'comments': 597,
-        'reposts': 125,
-        'shares': 45,
-      },
-      {
-        'profileImage': 'assets/images/Mancity.png',
-        'userName': 'Manchester City',
-        'userDescription': 'Football Club',
-        'timeAgo': '2d',
-        'content': '⚪ Match day ready! 💪\n#ManCity',
-        'postImage': 'assets/images/post.png',
-        'likes': 892,
-        'comments': 423,
-        'reposts': 87,
-        'shares': 34,
-      },
-    ];
+    );
   }
 }

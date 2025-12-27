@@ -19,11 +19,11 @@ class FirebaseService {
   }) async {
     try {
       // Create user in Firebase Auth
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: email.trim().toLowerCase(),
-        password: password,
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: email.trim().toLowerCase(),
+            password: password,
+          );
 
       User? user = userCredential.user;
 
@@ -37,6 +37,8 @@ class FirebaseService {
           'role': '',
           'bio': '',
           'profileImageUrl': '',
+          'followers': 0,
+          'following': 0,
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
           'emailVerified': false,
@@ -93,8 +95,10 @@ class FirebaseService {
   // Get user data from Firestore
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
-      DocumentSnapshot doc =
-          await _firestore.collection('users').doc(uid).get();
+      DocumentSnapshot doc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .get();
       if (doc.exists) {
         return doc.data() as Map<String, dynamic>?;
       }
@@ -144,7 +148,10 @@ class FirebaseService {
   }
 
   // Check if username is available
-  Future<bool> checkUsernameAvailability(String username, [String? currentUid]) async {
+  Future<bool> checkUsernameAvailability(
+    String username, [
+    String? currentUid,
+  ]) async {
     try {
       final usernameDoc = await _firestore
           .collection('usernames')
@@ -170,10 +177,10 @@ class FirebaseService {
   // Reserve username (create username document)
   Future<void> reserveUsername(String username, String uid) async {
     try {
-      await _firestore.collection('usernames').doc(username.trim().toLowerCase()).set({
-        'uid': uid,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      await _firestore
+          .collection('usernames')
+          .doc(username.trim().toLowerCase())
+          .set({'uid': uid, 'createdAt': FieldValue.serverTimestamp()});
     } catch (e) {
       throw 'Error reserving username: ${e.toString()}';
     }
@@ -189,7 +196,9 @@ class FirebaseService {
 
         // Get username and delete from usernames collection
         final userData = await getUserData(user.uid);
-        if (userData != null && userData['username'] != null && userData['username'].isNotEmpty) {
+        if (userData != null &&
+            userData['username'] != null &&
+            userData['username'].isNotEmpty) {
           await _firestore
               .collection('usernames')
               .doc(userData['username'])

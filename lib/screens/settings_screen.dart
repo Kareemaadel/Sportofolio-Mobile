@@ -24,7 +24,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   // Cloudinary service
   final CloudinaryService _cloudinaryService = CloudinaryService();
-  
+
   // --- Image picker and upload methods (must be at top for reference) ---
   Future<void> _uploadProfileImage(XFile imageFile) async {
     setState(() {
@@ -38,25 +38,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (!file.existsSync()) {
           throw Exception('Selected image file does not exist.');
         }
-        
+
         // Upload to Cloudinary with profile folder
         final downloadUrl = await _cloudinaryService.uploadImage(
           file,
           folder: 'sportofolio/profiles',
         );
-        
+
         if (downloadUrl == null) {
           throw Exception('Failed to upload image to Cloudinary');
         }
-        
+
         setState(() {
           _profileImageUrl = downloadUrl;
         });
-        
+
         await _firestore.collection('users').doc(currentUser.uid).update({
           'profileImageUrl': downloadUrl,
         });
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -117,6 +117,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Additional fields
   String _club = '';
   String _profileImageUrl = '';
+  bool _isVerified = false;
 
   final ImagePicker _picker = ImagePicker();
   XFile? _pickedImage;
@@ -163,6 +164,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _roleController.text = userData['role'] ?? '';
             _club = userData['club'] ?? '';
             _profileImageUrl = userData['profileImageUrl'] ?? '';
+            _isVerified = userData['isVerified'] ?? false;
             _isLoading = false;
           });
         } else {
@@ -241,6 +243,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
             backgroundColor: AppTheme.errorColor,
           ),
         );
+      }
+    }
+  }
+
+  Future<void> _applyForVerification() async {
+    // Show confirmation dialog
+    final shouldApply = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text(
+          'Apply for Verification',
+          style: TextStyle(color: AppTheme.textColor),
+        ),
+        content: const Text(
+          'Are you sure you want to apply for verification? Your profile will be reviewed.',
+          style: TextStyle(color: Color(0xFF8A8B8F)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF8A8B8F)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Apply',
+              style: TextStyle(color: AppTheme.accentColor),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldApply == true && mounted) {
+      try {
+        User? currentUser = _auth.currentUser;
+        if (currentUser != null) {
+          // Update Firestore to set verified status
+          await _firestore.collection('users').doc(currentUser.uid).update({
+            'isVerified': true,
+          });
+
+          setState(() {
+            _isVerified = true;
+            _dataChanged = true;
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 12),
+                    Text('Verification badge applied successfully!'),
+                  ],
+                ),
+                backgroundColor: Colors.blue,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error applying for verification: ${e.toString()}'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
       }
     }
   }
@@ -484,6 +561,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         }
                       },
                     ),
+                    _buildProfileItem(
+                      label: 'Apply for Verification',
+                      value: _isVerified ? 'Verified ✓' : 'Not Verified',
+                      onTap: _isVerified ? null : _applyForVerification,
+                      trailing: _isVerified
+                          ? const Icon(
+                              Icons.check_circle,
+                              color: Colors.blue,
+                              size: 20,
+                            )
+                          : null,
+                    ),
                   ],
                 ),
               ),
@@ -618,9 +707,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildProfileItem({
     required String label,
     required String value,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
     Color? valueColor,
     bool isFirst = false,
+    Widget? trailing,
   }) {
     return InkWell(
       onTap: onTap,
@@ -643,6 +733,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Row(
               children: [
+                if (trailing != null) ...[trailing, const SizedBox(width: 8)],
                 Text(
                   value,
                   style: TextStyle(
@@ -651,12 +742,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.chevron_right,
-                  color: Color(0xFF8A8B8F),
-                  size: 20,
-                ),
+                if (onTap != null) ...[
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.chevron_right,
+                    color: Color(0xFF8A8B8F),
+                    size: 20,
+                  ),
+                ],
               ],
             ),
           ],

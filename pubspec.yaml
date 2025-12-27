@@ -37,6 +37,7 @@ dependencies:
   flutter_svg: ^2.0.10
   cloudinary_public: ^0.21.0
   flutter_dotenv: ^5.1.0
+  timeago: ^3.7.0
 
   # Firebase dependencies
   firebase_core: ^3.6.0
