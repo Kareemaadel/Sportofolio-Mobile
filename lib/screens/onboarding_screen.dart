@@ -18,7 +18,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     'assets/images/onboarding1.png.png',
     'assets/images/onboarding2.png.png',
     'assets/images/onboarding3.png.png',
-    'assets/images/onboarding4.png.png',
   ];
 
   @override
